@@ -1,6 +1,6 @@
 # SSU_Meet_BE
-
-<br> Project : Gradle - Groovy
-<br> Spring Boot : 3.1.1
-<br> Java : 17
-<br> H2 Database : 2.1.214
+**프로젝트 버전 정보**
+- Project : Gradle - Groovy
+- Spring Boot : 3.1.1
+- Java : 17
+- H2 Database : 2.1.214
