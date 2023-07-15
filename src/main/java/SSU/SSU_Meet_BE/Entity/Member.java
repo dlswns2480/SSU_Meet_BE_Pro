@@ -1,5 +1,6 @@
 package SSU.SSU_Meet_BE.Entity;
 
+import SSU.SSU_Meet_BE.Common.MemberType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.lang.Nullable;
@@ -18,20 +19,20 @@ public class Member {
     @Column(name = "member_id")
     private Long id;
 
+    @Enumerated(EnumType.STRING)
+    private MemberType type; // USER, ADMIN;
+
     @Column(name = "student_number")
     private String studentNumber;
 
     @Column(name = "first_register_check")
     private Integer firstRegisterCheck;
 
-//    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Gender sex; // MALE, FEMALE;
 
-//    @Column(nullable = false)
     private Integer age;
 
-//    @Column(nullable = false)
     private Double height;
 
     @Column(name = "insta_id")
