@@ -54,10 +54,16 @@ public class HomeController {
         return ApiResponse.success("정보 얻기 성공", memberService.getMemberInfo(request));
     }
 
+    
+    @Operation(summary = "개인정보 등록")
     @PostMapping("/new")
     public void saveMemberInfo(@RequestBody Member member){
         memberService.save(member);
     }
+
+
+
+
 
 
 
