@@ -58,7 +58,7 @@ public class HomeController {
     @Operation(summary = "개인정보 등록")
     @PostMapping("/new")
     public void saveMemberInfo(@RequestBody Member member){
-        memberService.save(member);
+        memberService.join(member);
     }
 
 

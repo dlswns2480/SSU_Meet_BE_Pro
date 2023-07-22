@@ -26,20 +26,23 @@ public class StickyService {
         2. 포스트잇 등록(저장)
         3. 포스트잇 구매 -> 코인 차감 후 멤버 저장, 구매했던 리스트에 구매한 포스트잇 추가
      */
+
+    //포스트잇 전체 리스트
     public List<StickyNote> findNotes(){
         return stickyRepository.findAll();
     }
 
-    public void saveNotes(StickyNote stickyNote){
+    //포스트잇 하나
+    public Long saveNotes(StickyNote stickyNote){
         stickyRepository.save(stickyNote);
+        return stickyNote.getId();
     }
 
-//    public void buyNotes(StickyNote stickyNote, Long memberId){
+    //포스트잇 구매
+//    public void buyNotes(StickyNote stickyNote){
+//        Long memberId = stickyNote.getMember().getId();
 //        Optional<Member> member = memberRepository.findById(memberId);
-//        if(member.get().getCoin() != null){
-//            member.get().getCoin() -= 1;
-//        }
-//
+//        member.get().getCoin()--;
 //    }
 
 }

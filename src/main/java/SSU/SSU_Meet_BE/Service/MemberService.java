@@ -31,8 +31,9 @@ public class MemberService {
     }
 
 
-    public void save(Member member){
+    public Long join(Member member){
         memberRepository.save(member);
+        return member.getId();
     }
 
     @Transactional(readOnly = true)

@@ -67,5 +67,6 @@ public class Member {
     @Builder
     public Member(String studentNumber) {
         this.studentNumber = studentNumber;
+
     }
 }
