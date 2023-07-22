@@ -1,6 +1,5 @@
 package SSU.SSU_Meet_BE.Service;
 
-import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Repository.MemberRepository;
 import SSU.SSU_Meet_BE.Security.JwtAuthenticationFilter;
 import SSU.SSU_Meet_BE.Security.TokenProvider;
@@ -9,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

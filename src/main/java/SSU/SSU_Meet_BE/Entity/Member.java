@@ -33,7 +33,11 @@ public class Member {
 
     private Integer age;
 
-    private Double height;
+    private Integer height;
+
+    private String college; // 단과 대학
+
+    private String major; // 학과(부)
 
     @Column(name = "insta_id")
     private String instaId;
@@ -44,14 +48,7 @@ public class Member {
     @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Column(name = "today_purchase_count")
-    private Integer todayPurchaseCount; // 오늘 구매한 횟수 (스케쥴러로 자정 체크)
-
-    @Column(name = "total_choiced_count")
-    private Long totalChoicedCount; // 총 선택받은 횟수
-
-    @Column(name = "total_purchase_count")
-    private Long totalPurchaseCount; // 총 구매한 횟수
+    private Integer coin; // 보유 코인 개수
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<StickyNote> stickyNotes = new ArrayList<>(); //일대 다
@@ -59,6 +56,12 @@ public class Member {
     @PrePersist
     public void prePersist() {
         this.firstRegisterCheck = this.firstRegisterCheck == null ? 0 : this.firstRegisterCheck;
+    }
+
+    // 연관관계 편의 메서드
+    public void addSticky(StickyNote stickyNote) {
+        stickyNotes.add(stickyNote);
+        stickyNote.memberTo(this);
     }
 
     @Builder
