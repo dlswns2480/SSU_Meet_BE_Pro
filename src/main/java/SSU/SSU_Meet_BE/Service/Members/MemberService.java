@@ -19,7 +19,7 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public String getMemberInfo(HttpServletRequest request) {
-        String token = jwtAuthenticationFilter.parseBearerToken(request);
+        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
 
         return tokenProvider.validateTokenAndGetSubject(token);
     }

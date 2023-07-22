@@ -6,8 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record SignInResponse(
         @Schema(description = "회원 학번", example = "20192908")
         String studentNumber,
-        @Schema(description = "회원 유형", example = "USER")
-        MemberType type,
-        String token	// 추가
-) {
-}
+        @Schema(description = "토큰 타입", example = "bearer")
+        String tokenType,
+        @Schema(description = "JWT 토큰", example = "jwtjwtjwtjwtjwtjwtjwtjwt")
+        String accessToken	// 추가
+){}

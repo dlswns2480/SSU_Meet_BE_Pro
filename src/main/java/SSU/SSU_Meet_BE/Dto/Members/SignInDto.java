@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SignInDto {
     private String studentNumber;
-    private String pwd;
+    private String password;
 }
