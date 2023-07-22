@@ -1,9 +1,8 @@
 package SSU.SSU_Meet_BE.Service;
 
-import SSU.SSU_Meet_BE.Dto.SignIn.Request.SignInDto;
+import SSU.SSU_Meet_BE.Dto.Members.SignInDto;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -49,7 +48,7 @@ public class JsoupService {
         data.put("in_tp_bit", in_tp_bit); // 로그인 페이지에서 얻은 토큰들
         data.put("rqst_caus_cd", rqst_caus_cd);
         data.put("userid", loginInfo.getStudentNumber());
-        data.put("pwd", loginInfo.getPwd());
+        data.put("pwd", loginInfo.getPassword());
 //        data.put("userid", "20192928"); // 테스트용
 //        data.put("pwd", "dlagusrb123@"); //테스트용
 

@@ -1,4 +1,4 @@
-package SSU.SSU_Meet_BE.Dto.SignIn.Request;
+package SSU.SSU_Meet_BE.Dto.Members;
 
 import lombok.AccessLevel;
 import lombok.Data;

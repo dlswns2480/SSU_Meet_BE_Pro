@@ -1,4 +1,4 @@
-package SSU.SSU_Meet_BE.Dto.SignIn.Request;
+package SSU.SSU_Meet_BE.Common;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
