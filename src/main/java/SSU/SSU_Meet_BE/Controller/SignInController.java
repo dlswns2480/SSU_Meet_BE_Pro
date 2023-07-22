@@ -5,6 +5,7 @@ import SSU.SSU_Meet_BE.Dto.SignIn.Request.SignInDto;
 import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Repository.MemberRepository;
 import SSU.SSU_Meet_BE.Service.JsoupService;
+import SSU.SSU_Meet_BE.Service.MemberService;
 import SSU.SSU_Meet_BE.Service.SignService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,7 +24,7 @@ import java.util.Optional;
 @RequestMapping("/v1")
 public class SignInController {
 
-//    private final MemberService memberService;
+    private final MemberService memberService;
     private final SignService signService;
     private final JsoupService jsoupService;
     private final MemberRepository memberRepository;
