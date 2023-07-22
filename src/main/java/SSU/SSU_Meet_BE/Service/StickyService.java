@@ -16,6 +16,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class StickyService {
 
     @Autowired private final StickyRepository stickyRepository;
@@ -28,6 +29,7 @@ public class StickyService {
      */
 
     //포스트잇 전체 리스트
+    @Transactional(readOnly = true)
     public List<StickyNote> findNotes(){
         return stickyRepository.findAll();
     }
