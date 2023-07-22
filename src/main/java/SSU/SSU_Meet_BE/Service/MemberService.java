@@ -1,5 +1,6 @@
 package SSU.SSU_Meet_BE.Service;
 
+import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Repository.MemberRepository;
 import SSU.SSU_Meet_BE.Security.JwtAuthenticationFilter;
 import SSU.SSU_Meet_BE.Security.TokenProvider;
@@ -23,5 +24,17 @@ public class MemberService {
 
         return tokenProvider.validateTokenAndGetSubject(token);
     }
+
+    @Transactional
+    public void save(Member member){
+        memberRepository.save(member);
+    }
+
+    @Transactional
+    public void findMember(Long memberId){
+        memberRepository.findById(memberId);
+    }
+
+    @Transactional
 
 }

@@ -9,6 +9,7 @@ import SSU.SSU_Meet_BE.Service.MemberService;
 import SSU.SSU_Meet_BE.Service.SignService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,12 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.Optional;
 
-@Tag(name="회원가입 및 로그인")
+@Tag(name="회원가입, 로그인, 개인정보등록")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/v1")
-public class SignInController {
-
+@RequestMapping("/v1/members")
+public class HomeController {
     private final MemberService memberService;
     private final SignService signService;
     private final JsoupService jsoupService;
@@ -48,16 +48,20 @@ public class SignInController {
         }
     }
 
+    @Operation(summary = "회원 정보 조회")
+    @PostMapping("/getdetail")
+    public ApiResponse getMemberInfo(HttpServletRequest request) {
+        return ApiResponse.success("정보 얻기 성공", memberService.getMemberInfo(request));
+    }
 
-//    @PostMapping("/login")
-//    public String Login() {
-//        FirstRegisterDto memberDto = FirstRegisterDto.builder()
-//                .studentNumber("20192908")
-//                .build();
-//        Member member = Member.builder()
-//                .studentNumber(memberDto.getStudentNumber())
-//                .build();
-//        System.out.println("controller member = " + member);
-//        return memberService.Login2(member);
-//    }
+    @PostMapping("/new")
+    public void saveMemberInfo(@RequestBody Member member){
+        memberService.save(member);
+    }
+
+
+
+
+
+
 }
