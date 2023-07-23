@@ -1,54 +1,19 @@
-package SSU.SSU_Meet_BE.Controller;
+package SSU.SSU_Meet_BE.Service;
 
-import SSU.SSU_Meet_BE.Controller.Dto.FirstRegisterDto;
-//import SSU.SSU_Meet_BE.Entity.LoginInfo;
-import SSU.SSU_Meet_BE.Entity.Member;
-
-import SSU.SSU_Meet_BE.Service.MemberService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import SSU.SSU_Meet_BE.Dto.Members.SignInDto;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
-@RestController
-@RequiredArgsConstructor
-@Slf4j
-public class MemberController {
+@Service
+public class JsoupService {
 
-    private final MemberService memberService;
+    public Boolean crawling(SignInDto loginInfo) throws IOException {
 
-
-    @GetMapping("/member/login") //아이디 비밀번호가 body에 담겨서 날아온다고 가정
-//    public String Login(@RequestBody LoginInfo loginInfo) throws IOException {
-    public String Login() throws IOException{
-        System.out.println("controller start");
-        if(!crawling()){
-            System.out.println("login failed!!!!!!!");
-            return "failed";
-        }
-
-        FirstRegisterDto memberDto = FirstRegisterDto.builder()
-//                .studentNumber(loginInfo.getId())
-                .studentNumber("20192928")
-                .build();
-        Member member = Member.builder()
-                .studentNumber(memberDto.getStudentNumber())
-                .build();
-        System.out.println("controller member = " + member);
-        return memberService.Login(member);
-    }
-
-
-//    public boolean crawling(LoginInfo loginInfo) throws IOException {
-    public boolean crawling() throws IOException {
         Connection.Response loginPageResponse =
                 org.jsoup.Jsoup.connect("https://smartid.ssu.ac.kr/Symtra_sso/smln.asp?apiReturnUrl=https%3A%2F%2Fsaint.ssu.ac.kr%2FwebSSO%2Fsso.jsp")
                         .timeout(3000)
@@ -82,10 +47,10 @@ public class MemberController {
         Map<String, String> data = new HashMap<>();
         data.put("in_tp_bit", in_tp_bit); // 로그인 페이지에서 얻은 토큰들
         data.put("rqst_caus_cd", rqst_caus_cd);
-//        data.put("userid", loginInfo.getId());
-//        data.put("pwd", loginInfo.getPwd());
-        data.put("userid", ""); // 테스트용
-        data.put("pwd", ""); //테스트용
+        data.put("userid", loginInfo.getStudentNumber());
+        data.put("pwd", loginInfo.getPassword());
+//        data.put("userid", "20192928"); // 테스트용
+//        data.put("pwd", "dlagusrb123@"); //테스트용
 
 
         Connection.Response response = org.jsoup.Jsoup.connect("https://smartid.ssu.ac.kr/Symtra_sso/smln_pcs.asp")
@@ -110,9 +75,8 @@ public class MemberController {
 
         System.out.println("===================================");
         Map<String,String> loginsucceed = response.cookies();
-        System.out.println("--------------"+loginsucceed);
 
-        if(!Objects.equals(loginsucceed.get("sToken"), "")){
+        if(loginsucceed.get("sToken") != ""){
             System.out.println("login success");
             return true;
         }
