@@ -2,9 +2,6 @@ package Home;
 
 
 import SSU.SSU_Meet_BE.Entity.Member;
-import SSU.SSU_Meet_BE.Entity.StickyNote;
-import SSU.SSU_Meet_BE.Service.MemberService;
-import SSU.SSU_Meet_BE.Service.StickyService;
 import SSU.SSU_Meet_BE.SsuMeetBeApplication;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
