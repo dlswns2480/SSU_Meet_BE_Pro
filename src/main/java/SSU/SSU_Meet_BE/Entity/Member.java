@@ -1,6 +1,7 @@
 package SSU.SSU_Meet_BE.Entity;
 
 import SSU.SSU_Meet_BE.Common.MemberType;
+import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.lang.Nullable;
@@ -20,7 +21,7 @@ public class Member {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private MemberType type; // USER, ADMIN;
+    private MemberType type = MemberType.USER; // USER, ADMIN;
 
     @Column(name = "student_number")
     private String studentNumber;
@@ -30,6 +31,9 @@ public class Member {
 
     @Enumerated(EnumType.STRING)
     private Gender sex; // MALE, FEMALE;
+
+    @Column(name = "birth_year")
+    private Integer birthYear;
 
     private Integer age;
 
@@ -56,6 +60,7 @@ public class Member {
     @PrePersist
     public void prePersist() {
         this.firstRegisterCheck = this.firstRegisterCheck == null ? 0 : this.firstRegisterCheck;
+        this.coin = this.coin == null ? 0 : this.coin;
     }
 
     // 연관관계 편의 메서드
@@ -68,5 +73,21 @@ public class Member {
     public Member(String studentNumber) {
         this.studentNumber = studentNumber;
 
+    }
+
+    public void newRegister(UserDetailsDto userDetailsDto) {
+        this.sex = userDetailsDto.getSex(); // MALE, FEMALE
+        this.birthYear = userDetailsDto.getBirthYear();
+        this.age = userDetailsDto.getAge();
+        this.college = userDetailsDto.getCollege();
+        this.major = userDetailsDto.getMajor();
+        this.height = userDetailsDto.getHeight();
+        this.instaId = userDetailsDto.getInstaID();
+        this.kakaoId = userDetailsDto.getKakaoId();
+        this.phoneNumber = userDetailsDto.getPhoneNumber();
+    }
+
+    public void changeFirstRegisterCheck(Integer check) {
+        this.firstRegisterCheck = check;
     }
 }

@@ -1,4 +1,4 @@
-package SSU.SSU_Meet_BE.Dto.SignIn.Request;
+package SSU.SSU_Meet_BE.Dto.Members;
 
 import lombok.AccessLevel;
 import lombok.Data;
@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SignInDto {
     private String studentNumber;
-    private String pwd;
+    private String password;
 }
