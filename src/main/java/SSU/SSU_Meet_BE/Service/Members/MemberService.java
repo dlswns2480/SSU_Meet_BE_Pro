@@ -6,6 +6,7 @@ import SSU.SSU_Meet_BE.Dto.Members.SignInDto;
 import SSU.SSU_Meet_BE.Common.SignInResponse;
 import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
 import SSU.SSU_Meet_BE.Entity.Member;
+import SSU.SSU_Meet_BE.Entity.StickyNote;
 import SSU.SSU_Meet_BE.Repository.MemberRepository;
 import SSU.SSU_Meet_BE.Security.JwtAuthenticationFilter;
 import SSU.SSU_Meet_BE.Security.TokenProvider;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 

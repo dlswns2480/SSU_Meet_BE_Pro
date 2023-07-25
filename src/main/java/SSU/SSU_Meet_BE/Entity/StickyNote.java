@@ -1,10 +1,8 @@
 package SSU.SSU_Meet_BE.Entity;
 
+import SSU.SSU_Meet_BE.Dto.Members.StickyDetailsDto;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +48,28 @@ public class StickyNote {
     public void memberTo(Member member) {
         this.member = member;
     }
+
+    @Builder
+    public StickyNote(boolean isSold) {
+        this.isSold = isSold;
+    }
+
+    public void newResister(StickyDetailsDto stickyDetailsDto){
+        this.nickName = stickyDetailsDto.getNickName();
+        this.mbti = stickyDetailsDto.getMbti();
+        this.hobbyFirst = stickyDetailsDto.getHobbyFirst();
+        this.hobbySecond = stickyDetailsDto.getHobbySecond();
+        this.hobbyThird = stickyDetailsDto.getHobbyThird();
+        this.ideal = stickyDetailsDto.getIdeal();
+        this.introduce = stickyDetailsDto.getIntroduce();
+    }
+
+
+
+
+
+
+
 
 
 }

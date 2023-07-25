@@ -90,4 +90,6 @@ public class Member {
     public void changeFirstRegisterCheck(Integer check) {
         this.firstRegisterCheck = check;
     }
+
+
 }
