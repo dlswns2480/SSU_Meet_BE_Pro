@@ -11,6 +11,7 @@ import SSU.SSU_Meet_BE.Repository.StickyRepository;
 import SSU.SSU_Meet_BE.Security.JwtAuthenticationFilter;
 import SSU.SSU_Meet_BE.Security.TokenProvider;
 import SSU.SSU_Meet_BE.Service.JsoupService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -52,10 +53,11 @@ public class StickyNoteService {
         Optional<Member> member = memberRepository.findById(memberId);
         Optional<StickyNote> sticky = stickyRepository.findById(stickyId);
 
-        if(member.isPresent()){
+        if(member.isPresent()){ //isSold가 true인 포스트잇은 메인화면에 없어서 조건문 필요 X
             member.get().buySticky(); // 구매자의 코인 감소
             sticky.get().setIsSold(true); //해당 포스트잇은 판매완료 처리
-            return ApiResponse.success("포스트잇 열람 성공");
+            StickyDetailsDto stickyDto = StickyDetailsDto.mapFromEntity(sticky.get()); //반환할 포스트잇 DTO로 변환
+            return ApiResponse.success("포스트잇 열람 성공", stickyDto);
         }
         else{
             return ApiResponse.error("에러");
