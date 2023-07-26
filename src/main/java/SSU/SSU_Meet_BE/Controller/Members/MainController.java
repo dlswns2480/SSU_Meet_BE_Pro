@@ -6,11 +6,10 @@ import SSU.SSU_Meet_BE.Service.Members.MemberService;
 import SSU.SSU_Meet_BE.Service.Members.StickyNoteService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.websocket.server.PathParam;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,5 +23,12 @@ public class MainController {
     @PostMapping("/sticky/new")
     public ApiResponse newResisterSticky(HttpServletRequest request, @RequestBody StickyDetailsDto stickyDetailsDto){
         return stickyNoteService.resisterStickyNote(request, stickyDetailsDto);
+    }
+
+    @Operation(summary = "포스트잇 구매")
+    @GetMapping("/sticky/buy")
+    public ApiResponse buyStickyNote(HttpServletRequest request, @RequestParam("stickyId") String stickyId){
+        Long stickyIdLong = Long.parseLong(stickyId);
+        return stickyNoteService.buyStickyNote(request, stickyIdLong);
     }
 }

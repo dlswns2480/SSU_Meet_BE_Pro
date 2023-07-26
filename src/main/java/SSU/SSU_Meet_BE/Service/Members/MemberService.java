@@ -71,6 +71,7 @@ public class MemberService {
         if (member.isPresent()) {
             member.get().newRegister(userDetailsDto);
             member.get().changeFirstRegisterCheck(1);
+//            member.get().setCoin(3);
             return ApiResponse.success("개인정보 등록 성공");
         } else {
             return ApiResponse.error("회원을 찾을 수 없습니다");

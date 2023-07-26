@@ -54,6 +54,10 @@ public class StickyNote {
         this.isSold = isSold;
     }
 
+    public void setIsSold(boolean isSold) {
+        this.isSold = isSold;
+    }
+
     public void newResister(StickyDetailsDto stickyDetailsDto){
         this.nickName = stickyDetailsDto.getNickName();
         this.mbti = stickyDetailsDto.getMbti();

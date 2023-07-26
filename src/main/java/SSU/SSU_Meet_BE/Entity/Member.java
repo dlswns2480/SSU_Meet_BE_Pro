@@ -67,6 +67,13 @@ public class Member {
     public void addSticky(StickyNote stickyNote) {
         stickyNotes.add(stickyNote);
         stickyNote.memberTo(this);
+        this.coin = this.coin == null ? 0 : this.coin + 1;
+    }
+
+    
+    //연관관계 메서드
+    public void buySticky(){
+        this.coin--;
     }
 
     @Builder
@@ -90,6 +97,7 @@ public class Member {
     public void changeFirstRegisterCheck(Integer check) {
         this.firstRegisterCheck = check;
     }
+    
 
 
 }
