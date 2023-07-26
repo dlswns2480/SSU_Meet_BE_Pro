@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -54,5 +55,11 @@ public class MemberController {
     @GetMapping("/mypage/buy-list")
     public ApiResponse findBuyList(HttpServletRequest request){
         return memberService.findBuyList(request);
+    }
+
+    @Operation(summary = "마이페이지")
+    @GetMapping("/mypage")
+    public ApiResponse myPage(HttpServletRequest request){
+        return memberService.myPageElem(request);
     }
 }

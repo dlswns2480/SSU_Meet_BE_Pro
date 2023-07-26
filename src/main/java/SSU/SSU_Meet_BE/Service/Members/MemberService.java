@@ -2,11 +2,8 @@ package SSU.SSU_Meet_BE.Service.Members;
 
 import SSU.SSU_Meet_BE.Common.ApiResponse;
 import SSU.SSU_Meet_BE.Common.ApiStatus;
-import SSU.SSU_Meet_BE.Dto.Members.SignInDto;
+import SSU.SSU_Meet_BE.Dto.Members.*;
 import SSU.SSU_Meet_BE.Common.SignInResponse;
-import SSU.SSU_Meet_BE.Dto.Members.StickyDetailsDto;
-import SSU.SSU_Meet_BE.Dto.Members.StickyNoteListDto;
-import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
 import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Entity.StickyNote;
 import SSU.SSU_Meet_BE.Repository.MemberRepository;
@@ -68,9 +65,7 @@ public class MemberService {
     }
 
     public ApiResponse newRegister(HttpServletRequest request, UserDetailsDto userDetailsDto) {
-        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
-        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
-        Optional<Member> member = memberRepository.findById(memberId);
+        Optional<Member> member = getMember(request);
         if (member.isPresent()) {
             member.get().newRegister(userDetailsDto);
             member.get().changeFirstRegisterCheck(1);
@@ -84,9 +79,7 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public ApiResponse findResisterList(HttpServletRequest request){
-        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
-        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
-        Optional<Member> member = memberRepository.findById(memberId);
+        Optional<Member> member = getMember(request);
         if(member.isPresent()){
             List<StickyNote> stickyNotes = member.get().getStickyNotes(); // 해당 회원의 등록목록 엔티티 가져옴
             List<StickyNoteListDto> stickyNoteListDtos = new ArrayList<>(); // 등록목록 담을 DTO 생성
@@ -104,9 +97,7 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public ApiResponse findBuyList(HttpServletRequest request){
-        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
-        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
-        Optional<Member> member = memberRepository.findById(memberId);
+        Optional<Member> member = getMember(request);
         if(member.isPresent()){
             List<StickyNote> buyNotes = member.get().getBuyNotes();
             List<StickyNoteListDto> stickyNoteListDtos = new ArrayList<>();
@@ -120,6 +111,27 @@ public class MemberService {
         else{
             return ApiResponse.error("에러");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponse myPageElem(HttpServletRequest request){
+        Optional<Member> member = getMember(request);
+        if(member.isPresent()){
+            MyPageDto myPageDto = MyPageDto.mapFromEntity(member.get());
+            return ApiResponse.success("보유코인, 등록 포스트잇 개수", myPageDto);
+        }
+        else{
+            return ApiResponse.error("에러");
+        }
+
+    }
+
+
+    private Optional<Member> getMember(HttpServletRequest request) {
+        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
+        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
+        Optional<Member> member = memberRepository.findById(memberId);
+        return member;
     }
 
 }

@@ -31,9 +31,7 @@ public class StickyNoteService {
     private final JsoupService jsoupService;
 
     public ApiResponse resisterStickyNote(HttpServletRequest request, StickyDetailsDto stickyDetailsDto){
-        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
-        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
-        Optional<Member> member = memberRepository.findById(memberId);
+        Optional<Member> member = getMember(request);
         if(member.isPresent()){ //등록된 회원이 포스트잇 등록을 하려한다면
             StickyNote stickyNote = StickyNote.builder().isSold(false).build(); //판매 미완료로 등록
             stickyRepository.save(stickyNote);
@@ -48,20 +46,27 @@ public class StickyNoteService {
     }
 
     public ApiResponse buyStickyNote(HttpServletRequest request, Long stickyId){
-        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
-        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
-        Optional<Member> member = memberRepository.findById(memberId);
+        Optional<Member> member = getMember(request);
         Optional<StickyNote> sticky = stickyRepository.findById(stickyId);
 
         if(member.isPresent()){ //isSold가 true인 포스트잇은 메인화면에 없어서 조건문 필요 X
             member.get().buySticky(sticky.get()); // 구매자의 코인 감소
             sticky.get().setIsSold(true); //해당 포스트잇은 판매완료 처리
+
             StickyDetailsDto stickyDto = StickyDetailsDto.mapFromEntity(sticky.get()); //반환할 포스트잇 DTO로 변환
+
             return ApiResponse.success("포스트잇 열람 성공", stickyDto);
         }
         else{
             return ApiResponse.error("에러");
         }
+    }
+
+    private Optional<Member> getMember(HttpServletRequest request) {
+        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
+        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
+        Optional<Member> member = memberRepository.findById(memberId);
+        return member;
     }
 
 }
