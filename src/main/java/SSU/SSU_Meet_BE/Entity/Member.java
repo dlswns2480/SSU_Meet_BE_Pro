@@ -58,6 +58,7 @@ public class Member {
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<StickyNote> stickyNotes = new ArrayList<>(); //일대 다
 
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<StickyNote> buyNotes = new ArrayList<>();
 
     @PrePersist

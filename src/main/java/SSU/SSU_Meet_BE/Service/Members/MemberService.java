@@ -102,4 +102,24 @@ public class MemberService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public ApiResponse findBuyList(HttpServletRequest request){
+        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
+        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
+        Optional<Member> member = memberRepository.findById(memberId);
+        if(member.isPresent()){
+            List<StickyNote> buyNotes = member.get().getBuyNotes();
+            List<StickyNoteListDto> stickyNoteListDtos = new ArrayList<>();
+            for(StickyNote notes : buyNotes){
+                StickyDetailsDto stickyDto = StickyDetailsDto.mapFromEntity(notes);
+                StickyNoteListDto stickyNoteListDto = StickyNoteListDto.mapFromEntity(stickyDto);
+                stickyNoteListDtos.add(stickyNoteListDto);
+            }
+            return ApiResponse.success("구매한 포스트잇 목록입니다.", stickyNoteListDtos);
+        }
+        else{
+            return ApiResponse.error("에러");
+        }
+    }
+
 }
