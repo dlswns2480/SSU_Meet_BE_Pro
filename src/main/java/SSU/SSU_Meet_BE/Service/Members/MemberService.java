@@ -4,6 +4,8 @@ import SSU.SSU_Meet_BE.Common.ApiResponse;
 import SSU.SSU_Meet_BE.Common.ApiStatus;
 import SSU.SSU_Meet_BE.Dto.Members.SignInDto;
 import SSU.SSU_Meet_BE.Common.SignInResponse;
+import SSU.SSU_Meet_BE.Dto.Members.StickyDetailsDto;
+import SSU.SSU_Meet_BE.Dto.Members.StickyNoteListDto;
 import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
 import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Entity.StickyNote;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -75,6 +78,27 @@ public class MemberService {
             return ApiResponse.success("개인정보 등록 성공");
         } else {
             return ApiResponse.error("회원을 찾을 수 없습니다");
+        }
+    }
+
+
+    @Transactional(readOnly = true)
+    public ApiResponse findBuyList(HttpServletRequest request){
+        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
+        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
+        Optional<Member> member = memberRepository.findById(memberId);
+        if(member.isPresent()){
+            List<StickyNote> stickyNotes = member.get().getStickyNotes();
+            List<StickyNoteListDto> stickyNoteListDtos = new ArrayList<>();
+            for(StickyNote notes : stickyNotes){
+                StickyDetailsDto stickyDto = StickyDetailsDto.mapFromEntity(notes);
+                StickyNoteListDto stickyNoteListDto = StickyNoteListDto.mapFromEntity(stickyDto);
+                stickyNoteListDtos.add(stickyNoteListDto);
+            }
+            return ApiResponse.success("구매한 포스트잇 목록입니다.", stickyNoteListDtos);
+        }
+        else{
+            return ApiResponse.error("요청 실패");
         }
     }
 

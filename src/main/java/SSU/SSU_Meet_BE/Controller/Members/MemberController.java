@@ -13,10 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -43,8 +40,13 @@ public class MemberController {
 
     @Operation(summary = "개인정보 등록")
     @PostMapping("/new")
-
     public ApiResponse newRegister(HttpServletRequest request, @RequestBody UserDetailsDto userDetailsDto) {
         return memberService.newRegister(request, userDetailsDto);
+    }
+
+    @Operation(summary = "내가 등록한 포스트잇 목록")
+    @GetMapping("mypage/sticky-list")
+    public ApiResponse findBuyList(HttpServletRequest request){
+        return memberService.findBuyList(request);
     }
 }
