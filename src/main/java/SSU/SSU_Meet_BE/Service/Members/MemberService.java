@@ -88,12 +88,12 @@ public class MemberService {
         Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
         Optional<Member> member = memberRepository.findById(memberId);
         if(member.isPresent()){
-            List<StickyNote> stickyNotes = member.get().getStickyNotes();
-            List<StickyNoteListDto> stickyNoteListDtos = new ArrayList<>();
+            List<StickyNote> stickyNotes = member.get().getStickyNotes(); // 해당 회원의 구매목록 엔티티 가져옴
+            List<StickyNoteListDto> stickyNoteListDtos = new ArrayList<>(); // 구매목록 담을 DTO 생성
             for(StickyNote notes : stickyNotes){
-                StickyDetailsDto stickyDto = StickyDetailsDto.mapFromEntity(notes);
-                StickyNoteListDto stickyNoteListDto = StickyNoteListDto.mapFromEntity(stickyDto);
-                stickyNoteListDtos.add(stickyNoteListDto);
+                StickyDetailsDto stickyDto = StickyDetailsDto.mapFromEntity(notes); // 포스트잇 DTO로 변환 
+                StickyNoteListDto stickyNoteListDto = StickyNoteListDto.mapFromEntity(stickyDto); //변환된 DTO를 구매목록 DTO로 변환
+                stickyNoteListDtos.add(stickyNoteListDto); //위에서 생성한 구매목록 DTO에 추가
             }
             return ApiResponse.success("구매한 포스트잇 목록입니다.", stickyNoteListDtos);
         }
