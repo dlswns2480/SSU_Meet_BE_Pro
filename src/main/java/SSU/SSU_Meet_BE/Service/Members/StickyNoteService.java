@@ -54,7 +54,7 @@ public class StickyNoteService {
         Optional<StickyNote> sticky = stickyRepository.findById(stickyId);
 
         if(member.isPresent()){ //isSold가 true인 포스트잇은 메인화면에 없어서 조건문 필요 X
-            member.get().buySticky(); // 구매자의 코인 감소
+            member.get().buySticky(sticky.get()); // 구매자의 코인 감소
             sticky.get().setIsSold(true); //해당 포스트잇은 판매완료 처리
             StickyDetailsDto stickyDto = StickyDetailsDto.mapFromEntity(sticky.get()); //반환할 포스트잇 DTO로 변환
             return ApiResponse.success("포스트잇 열람 성공", stickyDto);

@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class StickyDetailsDto {
-
     private String nickName;
     private String mbti;
     private String hobbyFirst;
@@ -20,6 +19,7 @@ public class StickyDetailsDto {
 
     public static StickyDetailsDto mapFromEntity(StickyNote stickyNote) {
         StickyDetailsDto dto = new StickyDetailsDto();
+
         dto.setNickName(stickyNote.getNickName());
         dto.setMbti(stickyNote.getMbti());
         dto.setHobbyFirst(stickyNote.getHobbyFirst());

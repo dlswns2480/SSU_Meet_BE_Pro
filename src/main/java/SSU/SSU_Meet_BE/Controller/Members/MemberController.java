@@ -46,7 +46,7 @@ public class MemberController {
 
     @Operation(summary = "내가 등록한 포스트잇 목록")
     @GetMapping("mypage/sticky-list")
-    public ApiResponse findBuyList(HttpServletRequest request){
-        return memberService.findBuyList(request);
+    public ApiResponse findResisterList(HttpServletRequest request){
+        return memberService.findResisterList(request);
     }
 }

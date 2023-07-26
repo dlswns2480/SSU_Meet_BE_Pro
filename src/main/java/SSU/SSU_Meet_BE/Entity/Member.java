@@ -2,6 +2,7 @@ package SSU.SSU_Meet_BE.Entity;
 
 import SSU.SSU_Meet_BE.Common.MemberType;
 import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
+import SSU.SSU_Meet_BE.Service.Members.StickyNoteService;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.lang.Nullable;
@@ -57,6 +58,8 @@ public class Member {
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<StickyNote> stickyNotes = new ArrayList<>(); //일대 다
 
+    private List<StickyNote> buyNotes = new ArrayList<>();
+
     @PrePersist
     public void prePersist() {
         this.firstRegisterCheck = this.firstRegisterCheck == null ? 0 : this.firstRegisterCheck;
@@ -72,8 +75,9 @@ public class Member {
 
     
     //연관관계 메서드
-    public void buySticky(){
+    public void buySticky(StickyNote stickyNote){
         this.coin--;
+        buyNotes.add(stickyNote);
     }
 
     @Builder
