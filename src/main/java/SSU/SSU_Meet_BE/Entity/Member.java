@@ -55,7 +55,10 @@ public class Member {
     private Integer coin; // 보유 코인 개수
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
-    private List<StickyNote> stickyNotes = new ArrayList<>(); //일대 다
+    private List<StickyNote> stickyNotes = new ArrayList<>(); //일대 다 // 현재 등록되어있는 포스트잇 리스트
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    private List<StickyNote> buyNotes = new ArrayList<>(); //일대 다 // 구매한 포스트잇 리스트
 
     @PrePersist
     public void prePersist() {

@@ -35,6 +35,7 @@ public class MemberController {
 //    public ApiResponse getMemberInfo(HttpServletRequest request) {
 //        return ApiResponse.success("정보 얻기 성공", memberService.getMemberInfo(request));
 //    }
+
     @Operation(summary = "로그인 & JWT 토큰 발급")
     @PostMapping("/login")
     public ApiResponse login(@RequestBody SignInDto signInDto) throws IOException {
@@ -43,7 +44,6 @@ public class MemberController {
 
     @Operation(summary = "개인정보 등록")
     @PostMapping("/new")
-
     public ApiResponse newRegister(HttpServletRequest request, @RequestBody UserDetailsDto userDetailsDto) {
         return memberService.newRegister(request, userDetailsDto);
     }

@@ -49,8 +49,6 @@ public class JsoupService {
         data.put("rqst_caus_cd", rqst_caus_cd);
         data.put("userid", loginInfo.getStudentNumber());
         data.put("pwd", loginInfo.getPassword());
-//        data.put("userid", "20192928"); // 테스트용
-//        data.put("pwd", "dlagusrb123@"); //테스트용
 
 
         Connection.Response response = org.jsoup.Jsoup.connect("https://smartid.ssu.ac.kr/Symtra_sso/smln_pcs.asp")
