@@ -39,6 +39,9 @@ public class StickyNote {
     @JoinColumn(name = "member_id")
     private Member member; // 다대 일
 
+    @OneToMany(mappedBy = "stickyNote", cascade = CascadeType.ALL)
+    private List<Purchase> purchases = new ArrayList<>();
+
     @PrePersist
     public void prePersist() {
         this.isSold = this.isSold == null ? 0 : this.isSold;
@@ -47,6 +50,10 @@ public class StickyNote {
     // 연관관계 편의 메서드
     public void setMember(Member member) {
         this.member = member;
+    }
+
+    public void addPurchase(Purchase purchase) {
+        this.purchases.add(purchase);
     }
 
     public void addIdeal(Ideal ideal) {
@@ -75,6 +82,11 @@ public class StickyNote {
             this.addIdeal(newIdeal);
         }
         this.introduce = stickyRegisterDto.getIntroduce();
+    }
+
+    // 포스트잇 팔림 상태 변경
+    public void sold() {
+        this.isSold = 1;
     }
 
 }

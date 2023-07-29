@@ -74,6 +74,7 @@ public class MemberService {
     }
 
     // JWT 토큰에서 멤버 가져오는 메서드
+    @Transactional(readOnly = true)
     public Optional<Member> getMemberFromToken(HttpServletRequest request) {
         String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
         Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
