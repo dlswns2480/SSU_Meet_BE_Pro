@@ -1,17 +1,14 @@
 package SSU.SSU_Meet_BE.Controller.Members;
 
-import SSU.SSU_Meet_BE.Common.ApiStatus;
 import SSU.SSU_Meet_BE.Common.ApiResponse;
 import SSU.SSU_Meet_BE.Dto.Members.SignInDto;
 import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
-import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Repository.MemberRepository;
 import SSU.SSU_Meet_BE.Service.JsoupService;
 import SSU.SSU_Meet_BE.Service.Members.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,7 +40,6 @@ public class MemberController {
 
     @Operation(summary = "개인정보 등록")
     @PostMapping("/new")
-
     public ApiResponse newRegister(HttpServletRequest request, @RequestBody UserDetailsDto userDetailsDto) {
         return memberService.newRegister(request, userDetailsDto);
     }

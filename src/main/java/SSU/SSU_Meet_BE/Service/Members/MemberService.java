@@ -63,9 +63,7 @@ public class MemberService {
     }
 
     public ApiResponse newRegister(HttpServletRequest request, UserDetailsDto userDetailsDto) {
-        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
-        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
-        Optional<Member> member = memberRepository.findById(memberId);
+        Optional<Member> member = getMemberFromToken(request);
         if (member.isPresent()) {
             member.get().newRegister(userDetailsDto);
             member.get().changeFirstRegisterCheck(1);
@@ -73,6 +71,13 @@ public class MemberService {
         } else {
             return ApiResponse.error("회원을 찾을 수 없습니다");
         }
+    }
+
+    // JWT 토큰에서 멤버 가져오는 메서드
+    public Optional<Member> getMemberFromToken(HttpServletRequest request) {
+        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
+        Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
+        return memberRepository.findById(memberId);
     }
 
 }

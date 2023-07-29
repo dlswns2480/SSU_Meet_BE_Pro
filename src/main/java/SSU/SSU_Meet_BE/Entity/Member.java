@@ -4,7 +4,6 @@ import SSU.SSU_Meet_BE.Common.MemberType;
 import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +65,7 @@ public class Member {
     // 연관관계 편의 메서드
     public void addSticky(StickyNote stickyNote) {
         stickyNotes.add(stickyNote);
-        stickyNote.memberTo(this);
+        stickyNote.setMember(this);
     }
 
     @Builder
