@@ -31,8 +31,8 @@ public class Member {
     @Enumerated(EnumType.STRING)
     private Gender sex; // MALE, FEMALE;
 
-    @Column(name = "birth_year")
-    private Integer birthYear;
+    @Column(name = "birth_date")
+    private String birthDate; // 생년월일
 
     private Integer age;
 
@@ -90,12 +90,12 @@ public class Member {
     // 멤버 기본정보 등록
     public void newRegister(UserDetailsDto userDetailsDto) {
         this.sex = userDetailsDto.getSex(); // MALE, FEMALE
-        this.birthYear = userDetailsDto.getBirthYear();
+        this.birthDate = userDetailsDto.getBirthDate();
         this.age = userDetailsDto.getAge();
         this.college = userDetailsDto.getCollege();
         this.major = userDetailsDto.getMajor();
         this.height = userDetailsDto.getHeight();
-        this.instaId = userDetailsDto.getInstaID();
+        this.instaId = userDetailsDto.getInstaId();
         this.kakaoId = userDetailsDto.getKakaoId();
         this.phoneNumber = userDetailsDto.getPhoneNumber();
     }

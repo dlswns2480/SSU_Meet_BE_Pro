@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-//@ToString(exclude = "stickyNotes")
+@ToString(exclude = {"stickyNote","buyer"})
 @Getter
 public class Purchase {
     @Id
