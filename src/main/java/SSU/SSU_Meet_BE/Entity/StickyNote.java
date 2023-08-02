@@ -1,10 +1,9 @@
 package SSU.SSU_Meet_BE.Entity;
 
+import SSU.SSU_Meet_BE.Dto.Members.StickyDetailDto;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,5 +50,14 @@ public class StickyNote {
         this.member = member;
     }
 
+    public void newResister(StickyDetailDto stickyDetailsDto){
+        this.nickName = stickyDetailsDto.getNickName();
+        this.mbti = stickyDetailsDto.getMbti();
+        this.hobbyFirst = stickyDetailsDto.getHobbyFirst();
+        this.hobbySecond = stickyDetailsDto.getHobbySecond();
+        this.hobbyThird = stickyDetailsDto.getHobbyThird();
+        this.ideal = stickyDetailsDto.getIdeal();
+        this.introduce = stickyDetailsDto.getIntroduce();
+    }
 
 }
