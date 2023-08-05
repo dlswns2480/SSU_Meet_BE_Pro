@@ -1,22 +1,16 @@
 package SSU.SSU_Meet_BE.Controller.Members;
 
-import SSU.SSU_Meet_BE.Common.ApiStatus;
 import SSU.SSU_Meet_BE.Common.ApiResponse;
 import SSU.SSU_Meet_BE.Dto.Members.SignInDto;
 import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
-import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Repository.MemberRepository;
 import SSU.SSU_Meet_BE.Service.JsoupService;
 import SSU.SSU_Meet_BE.Service.Members.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -46,5 +40,35 @@ public class MemberController {
     @PostMapping("/new")
     public ApiResponse newRegister(HttpServletRequest request, @RequestBody UserDetailsDto userDetailsDto) {
         return memberService.newRegister(request, userDetailsDto);
+    }
+
+    @Operation(summary = "마이페이지")
+    @GetMapping("/mypage")
+    public ApiResponse myPage(HttpServletRequest request) {
+        return memberService.myPage(request);
+    }
+
+    @Operation(summary = "개인정보수정 하기 버튼 클릭")
+    @GetMapping("/mypage/modify")
+    public ApiResponse startModify(HttpServletRequest request) {
+        return memberService.startModify(request);
+    }
+
+    @Operation(summary = "개인정보수정 완료 버튼 클릭")
+    @PostMapping("/mypage/modify")
+    public ApiResponse endModify(HttpServletRequest request, @RequestBody UserDetailsDto userDetailsDto) {
+        return memberService.endModify(request, userDetailsDto);
+    }
+
+    @Operation(summary = "내가 등록한 포스트잇 확인")
+    @GetMapping("/mypage/sticky-list")
+    public ApiResponse myRegisteredSticky(HttpServletRequest request) {
+        return memberService.myRegisteredSticky(request);
+    }
+
+    @Operation(summary = "내가 구매한 포스트잇 확인")
+    @GetMapping("/mypage/buy-list")
+    public ApiResponse myBoughtSticky(HttpServletRequest request) {
+        return memberService.myBoughtSticky(request);
     }
 }

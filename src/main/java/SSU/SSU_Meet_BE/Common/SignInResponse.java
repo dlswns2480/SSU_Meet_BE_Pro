@@ -1,6 +1,5 @@
 package SSU.SSU_Meet_BE.Common;
 
-import SSU.SSU_Meet_BE.Common.MemberType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record SignInResponse(
