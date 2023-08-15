@@ -22,7 +22,7 @@ import static org.springframework.security.config.Customizer.*;
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    private final String[] allowedUrls = {"/", "/swagger-ui/**", "/v1/members/**", "v1/**"};	// sign-up, sign-in 추가
+    private final String[] allowedUrls = {"/", "/swagger-ui/**", "/swagger-ui.html", "/v1/members/**", "v1/**", "/v3/api-docs/**"};	// sign-up, sign-in 추가
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
