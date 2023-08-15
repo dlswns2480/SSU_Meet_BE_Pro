@@ -13,6 +13,9 @@ public interface StickyNoteRepository extends JpaRepository<StickyNote, Long> {
     @Query("SELECT s FROM StickyNote s JOIN s.hobbies JOIN FETCH s.ideals WHERE s.member.id = :memberId")
     List<StickyNote> findAllByMemberIdWithHobbiesAndIdeals(@Param("memberId") Long memberId);
 
-    @Query("SELECT p.stickyNote FROM Purchase p WHERE p.buyer.id = :memberId")
+    @Query("SELECT p.stickyNote FROM Purchase p JOIN p.stickyNote.hobbies JOIN FETCH p.stickyNote.ideals WHERE p.buyer.id = :memberId ORDER BY p.purchaseDate DESC")
     List<StickyNote> findAllByMemberIdWithPurchases(@Param("memberId") Long memberId);
+    @Query("SELECT count(s) FROM StickyNote s WHERE s.member.id = :memberId and s.isSold = 0")
+    Integer findMyStickyNoteCount(@Param("memberId") Long memberId);
+
 }

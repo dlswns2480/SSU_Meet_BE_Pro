@@ -1,23 +1,25 @@
 package SSU.SSU_Meet_BE.Service.Members;
 
 import SSU.SSU_Meet_BE.Common.ApiResponse;
-import SSU.SSU_Meet_BE.Common.ApiStatus;
 import SSU.SSU_Meet_BE.Dto.Members.MyPageDto;
 import SSU.SSU_Meet_BE.Dto.Members.SignInDto;
 import SSU.SSU_Meet_BE.Common.SignInResponse;
 import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
-import SSU.SSU_Meet_BE.Dto.Sticky.StickyAllDto;
-import SSU.SSU_Meet_BE.Dto.Sticky.StickyIdDto;
-import SSU.SSU_Meet_BE.Dto.Sticky.StickyInfoDto;
+import SSU.SSU_Meet_BE.Dto.Sticky.*;
+import SSU.SSU_Meet_BE.Entity.Gender;
 import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Entity.StickyNote;
 import SSU.SSU_Meet_BE.Repository.MemberRepository;
+import SSU.SSU_Meet_BE.Repository.PagingRepository;
+import SSU.SSU_Meet_BE.Repository.PurchaseRepository;
 import SSU.SSU_Meet_BE.Repository.StickyNoteRepository;
 import SSU.SSU_Meet_BE.Security.JwtAuthenticationFilter;
 import SSU.SSU_Meet_BE.Security.TokenProvider;
 import SSU.SSU_Meet_BE.Service.JsoupService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,8 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final StickyNoteRepository stickyNoteRepository;
+    private final PagingRepository pagingRepository;
+    private final PurchaseRepository purchaseRepository;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final TokenProvider tokenProvider;
     private final JsoupService jsoupService;
@@ -81,14 +85,58 @@ public class MemberService {
         }
     }
 
+    //메인 페이지
+    @Transactional(readOnly = true)
+    public ApiResponse mainPage(HttpServletRequest request, Pageable pageable) {
+        Optional<Member> member = getMemberFromToken(request);
+        if (member.isPresent()) {
+            Page<StickyNote> allStickyNoteList;
+            MainAllDto mainAllDto = new MainAllDto();
+            MainAllPageZeroDto mainAllPageZeroDto = new MainAllPageZeroDto();
+            Gender gender = member.get().getSex();
+            if (gender == Gender.MALE) { // 사용자가 남성일 경우
+                allStickyNoteList = pagingRepository.findByGender(Gender.FEMALE, member.get().getMajor(), pageable); // 메인에 여성만 조회
+            } else { // 사용자가 여성일 경우
+                allStickyNoteList = pagingRepository.findByGender(Gender.MALE, member.get().getMajor(), pageable); // 메인에 남성만 조회
+            }
+
+            for (StickyNote mainStickyNote : allStickyNoteList) {
+                Member stickyNoteMember = mainStickyNote.getMember();
+                MainInfoDto mainInfoDto = MainInfoDto.builder()
+                        .member(stickyNoteMember)
+                        .stickyNote(mainStickyNote)
+                        .build();
+                MainIdDto mainIdDto = MainIdDto.builder()
+                        .stickyNote(mainStickyNote)
+                        .mainInfoDto(mainInfoDto)
+                        .build();
+                if (pageable.getPageNumber() == 0) { // 첫번 째 페이지면
+                    mainAllPageZeroDto.addBasicCounts(member.get().getCoin(), stickyNoteRepository.findMyStickyNoteCount(member.get().getId()));
+                    mainAllPageZeroDto.addAllCount(allStickyNoteList.getTotalElements());
+                    mainAllPageZeroDto.addMainIdDto(mainIdDto);
+                } else { // 첫번 째 페이지 아니면
+                    mainAllDto.addMainIdDto(mainIdDto);
+                }
+            }
+            if (pageable.getPageNumber() == 0) { // 첫번 째 페이지면
+                return ApiResponse.success("첫번째 메인페이지 성공", mainAllPageZeroDto);
+            } else {
+                return ApiResponse.success("메인페이지 성공", mainAllDto);
+            }
+        }
+
+        return ApiResponse.error("메인페이지 실패");
+    }
+
     // 마이페이지에서 보유 코인이랑, 나의 포스트잇 개수 전달
     @Transactional(readOnly = true)
     public ApiResponse myPage(HttpServletRequest request) {
+
         Optional<Member> member = getMemberFromToken(request);
         if (member.isPresent()) {
             MyPageDto myPageDto = MyPageDto.builder()
                     .myCoinCount(member.get().getCoin())
-                    .myStickyCount(member.get().getStickyNotes().size())
+                    .myStickyCount(stickyNoteRepository.findMyStickyNoteCount(member.get().getId()))
                     .build();
             return ApiResponse.success("마이페이지", myPageDto);
         }
@@ -163,6 +211,28 @@ public class MemberService {
 
     }
 
+    // 회원 탈퇴
+    public ApiResponse deleteMEmber(HttpServletRequest request) {
+        Optional<Member> member = getMemberFromToken(request);
+        if (member.isPresent()) {
+            memberRepository.delete(member.get());
+            return ApiResponse.success("회원 삭제 성공");
+        }
+        return ApiResponse.error("회원 삭제 실패");
+    }
+
+
+    // 내가 구매한 해당 포스트잇 삭제
+    public ApiResponse deleteSticky(HttpServletRequest request, Long stickyId) {
+        Optional<Member> member = getMemberFromToken(request);
+        Optional<StickyNote> stickyNote = stickyNoteRepository.findById(stickyId);
+        if (member.isPresent() && stickyNote.isPresent()) {
+            purchaseRepository.deleteByBuyerAndStickyNote(member.get(), stickyNote.get());
+            return ApiResponse.success("포스트잇 삭제 완료");
+        }
+        return ApiResponse.error("포스트잇 삭제 실패");
+    }
+
     // JWT 토큰에서 멤버 가져오는 메서드
     @Transactional(readOnly = true)
     public Optional<Member> getMemberFromToken(HttpServletRequest request) {
@@ -170,4 +240,5 @@ public class MemberService {
         Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
         return memberRepository.findById(memberId);
     }
+
 }

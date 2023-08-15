@@ -5,6 +5,7 @@ import SSU.SSU_Meet_BE.Dto.Sticky.StickyRegisterDto;
 import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Entity.Purchase;
 import SSU.SSU_Meet_BE.Entity.StickyNote;
+import SSU.SSU_Meet_BE.Repository.PagingRepository;
 import SSU.SSU_Meet_BE.Repository.StickyNoteRepository;
 import SSU.SSU_Meet_BE.Service.Members.MemberService;
 import jakarta.servlet.http.HttpServletRequest;

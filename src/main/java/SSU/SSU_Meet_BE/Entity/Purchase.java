@@ -37,5 +37,4 @@ public class Purchase {
         buyer.addPurchase(this);
         stickyNote.addPurchase(this);
     }
-
 }
