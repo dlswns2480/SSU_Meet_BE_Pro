@@ -52,17 +52,17 @@ public class MemberService {
             Optional<Member> findUser = memberRepository.findByStudentNumber(signInDto.getStudentNumber());
             if (findUser.isPresent()) { // DB에 있으면
                 if (findUser.get().getFirstRegisterCheck().equals(1)) { // 첫 등록 했을 경우
-                    return ApiResponse.success("메인 접속", makeJWT(signInDto));
+                    return ApiResponse.success("Main Ok", makeJWT(signInDto));
                 } else { // 첫 등록 안 했을 경우
-                    return ApiResponse.success("개인정보 등록 필요", makeJWT(signInDto));
+                    return ApiResponse.success("Need new register", makeJWT(signInDto));
                 }
             } else { // DB에 없으면 Member save 후 개인정보 등록
                 Member member = Member.builder().studentNumber(signInDto.getStudentNumber()).build();
                 memberRepository.save(member);
-                return ApiResponse.success("개인정보 등록 필요", makeJWT(signInDto));
+                return ApiResponse.success("Need new register", makeJWT(signInDto));
             }
         } else {                   // 유세인트 조회 실패
-            return ApiResponse.error("유세인트 로그인 실패!");
+            return ApiResponse.error("Fail to U-saint login");
         }
     }
     @Transactional(readOnly = true)
@@ -79,9 +79,9 @@ public class MemberService {
         if (member.isPresent()) {
             member.get().newRegister(userDetailsDto);
             member.get().changeFirstRegisterCheck(1);
-            return ApiResponse.success("개인정보 등록 성공");
+            return ApiResponse.success("Success to personal register");
         } else {
-            return ApiResponse.error("회원을 찾을 수 없습니다");
+            return ApiResponse.error("Cannot find member");
         }
     }
 
@@ -138,9 +138,9 @@ public class MemberService {
                     .myCoinCount(member.get().getCoin())
                     .myStickyCount(stickyNoteRepository.findMyStickyNoteCount(member.get().getId()))
                     .build();
-            return ApiResponse.success("마이페이지", myPageDto);
+            return ApiResponse.success("Mypage", myPageDto);
         }
-        return ApiResponse.error("마이페이지 에러");
+        return ApiResponse.error("Mypage error");
     }
 
     // 개인정보 수정 버튼 눌렀을 때
@@ -161,7 +161,7 @@ public class MemberService {
     public ApiResponse endModify(HttpServletRequest request, UserDetailsDto userDetailsDto) {
         Optional<Member> member = getMemberFromToken(request);
         member.ifPresent(value -> value.newRegister(userDetailsDto));
-        return ApiResponse.success("개인정보 수정 완료");
+        return ApiResponse.success("Success to modify");
     }
 
     // 마이페이지 - 내가 등록한 포스트잇 확인

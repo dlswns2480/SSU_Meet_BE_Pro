@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 
 @Tag(name = "멤버 관련 API")
+@CrossOrigin(maxAge = 3600)
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/v1/members")
