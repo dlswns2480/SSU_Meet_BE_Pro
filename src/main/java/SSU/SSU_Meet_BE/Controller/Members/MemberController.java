@@ -90,6 +90,13 @@ public class MemberController {
         return memberService.deleteMEmber(request);
     }
 
+
+    @Operation(summary = "코인, 포스트잇 개수")
+    @GetMapping("coin")
+    public ApiResponse getCoinAndStickyNote(HttpServletRequest request)
+    {
+        return memberService.getCoinAndStickyCount(request);
+    }
 }
 
 

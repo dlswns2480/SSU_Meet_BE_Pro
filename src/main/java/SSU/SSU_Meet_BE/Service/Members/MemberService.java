@@ -233,6 +233,19 @@ public class MemberService {
         return ApiResponse.error("포스트잇 삭제 실패");
     }
 
+    //코인, 포스트잇 개수 구하는 메서드
+    @Transactional(readOnly = true)
+    public ApiResponse getCoinAndStickyCount(HttpServletRequest request){
+        Optional<Member> member = getMemberFromToken(request);
+        if (member.isPresent()) {
+            MyPageDto myPageDto = MyPageDto.builder()
+                    .myCoinCount(member.get().getCoin())
+                    .myStickyCount(stickyNoteRepository.findMyStickyNoteCount(member.get().getId()))
+                    .build();
+            return ApiResponse.success("# of Coin and StickyNote", myPageDto);
+        }
+        return ApiResponse.error("Mypage error");
+    }
     // JWT 토큰에서 멤버 가져오는 메서드
     @Transactional(readOnly = true)
     public Optional<Member> getMemberFromToken(HttpServletRequest request) {
@@ -240,5 +253,7 @@ public class MemberService {
         Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
         return memberRepository.findById(memberId);
     }
+
+
 
 }
