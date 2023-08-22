@@ -41,6 +41,12 @@ public class MemberController {
         return memberService.newRegister(request, userDetailsDto);
     }
 
+    @Operation(summary = "내 코인 개수 전달")
+    @GetMapping("/mycoin")
+    public ApiResponse myCoinCount(HttpServletRequest request) {
+        return memberService.myCoinCount(request);
+    }
+
     @Operation(summary = "메인페이지")
     @GetMapping("/main")
     public ApiResponse mainPage(HttpServletRequest request, Pageable pageable) {
