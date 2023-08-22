@@ -1,6 +1,7 @@
 package SSU.SSU_Meet_BE.Service.Members;
 
 import SSU.SSU_Meet_BE.Common.ApiResponse;
+import SSU.SSU_Meet_BE.Dto.Members.MyCoinDto;
 import SSU.SSU_Meet_BE.Dto.Members.MyPageDto;
 import SSU.SSU_Meet_BE.Dto.Members.SignInDto;
 import SSU.SSU_Meet_BE.Common.SignInResponse;
@@ -85,6 +86,11 @@ public class MemberService {
         }
     }
 
+    public ApiResponse myCoinCount(HttpServletRequest request) {
+        Optional<Member> member = getMemberFromToken(request);
+        return member.map(value -> ApiResponse.success("코인 개수 전달 성공", MyCoinDto.builder().myCoinCount(value.getCoin()).build())).orElseGet(() -> ApiResponse.error("코인 개수 전달 에러"));
+    }
+
     //메인 페이지
     @Transactional(readOnly = true)
     public ApiResponse mainPage(HttpServletRequest request, Pageable pageable) {
@@ -111,8 +117,8 @@ public class MemberService {
                         .mainInfoDto(mainInfoDto)
                         .build();
                 if (pageable.getPageNumber() == 0) { // 첫번 째 페이지면
-                    mainAllPageZeroDto.addBasicCounts(member.get().getCoin(), stickyNoteRepository.findMyStickyNoteCount(member.get().getId()));
-                    mainAllPageZeroDto.addAllCount(allStickyNoteList.getTotalElements());
+                    mainAllPageZeroDto.addBasicCounts(stickyNoteRepository.findMyStickyNoteCount(member.get().getId()));
+                    mainAllPageZeroDto.addAllStickyCount(allStickyNoteList.getTotalElements());
                     mainAllPageZeroDto.addMainIdDto(mainIdDto);
                 } else { // 첫번 째 페이지 아니면
                     mainAllDto.addMainIdDto(mainIdDto);
@@ -135,7 +141,6 @@ public class MemberService {
         Optional<Member> member = getMemberFromToken(request);
         if (member.isPresent()) {
             MyPageDto myPageDto = MyPageDto.builder()
-                    .myCoinCount(member.get().getCoin())
                     .myStickyCount(stickyNoteRepository.findMyStickyNoteCount(member.get().getId()))
                     .build();
             return ApiResponse.success("Mypage", myPageDto);
@@ -157,7 +162,6 @@ public class MemberService {
     }
 
     // 개인정보 수정 완료 버튼 눌렀을 때
-
     public ApiResponse endModify(HttpServletRequest request, UserDetailsDto userDetailsDto) {
         Optional<Member> member = getMemberFromToken(request);
         member.ifPresent(value -> value.newRegister(userDetailsDto));
