@@ -53,17 +53,17 @@ public class MemberService {
             Optional<Member> findUser = memberRepository.findByStudentNumber(signInDto.getStudentNumber());
             if (findUser.isPresent()) { // DB에 있으면
                 if (findUser.get().getFirstRegisterCheck().equals(1)) { // 첫 등록 했을 경우
-                    return ApiResponse.success("Main Ok", makeJWT(signInDto));
+                    return ApiResponse.success("RegisteredUser", makeJWT(signInDto));
                 } else { // 첫 등록 안 했을 경우
-                    return ApiResponse.success("Need new register", makeJWT(signInDto));
+                    return ApiResponse.success("RequiredFirstRegistration", makeJWT(signInDto));
                 }
             } else { // DB에 없으면 Member save 후 개인정보 등록
                 Member member = Member.builder().studentNumber(signInDto.getStudentNumber()).build();
                 memberRepository.save(member);
-                return ApiResponse.success("Need new register", makeJWT(signInDto));
+                return ApiResponse.success("RequiredFirstRegistration", makeJWT(signInDto));
             }
         } else {                   // 유세인트 조회 실패
-            return ApiResponse.error("Fail to U-saint login");
+            return ApiResponse.error("FailedToLogin");
         }
     }
     @Transactional(readOnly = true)
@@ -80,15 +80,15 @@ public class MemberService {
         if (member.isPresent()) {
             member.get().newRegister(userDetailsDto);
             member.get().changeFirstRegisterCheck(1);
-            return ApiResponse.success("Success to personal register");
+            return ApiResponse.success("SuccessToFirstRegistration");
         } else {
-            return ApiResponse.error("Cannot find member");
+            return ApiResponse.error("CantFindUser");
         }
     }
 
     public ApiResponse myCoinCount(HttpServletRequest request) {
         Optional<Member> member = getMemberFromToken(request);
-        return member.map(value -> ApiResponse.success("코인 개수 전달 성공", MyCoinDto.builder().myCoinCount(value.getCoin()).build())).orElseGet(() -> ApiResponse.error("코인 개수 전달 에러"));
+        return member.map(value -> ApiResponse.success("SuccessCoinCount", MyCoinDto.builder().myCoinCount(value.getCoin()).build())).orElseGet(() -> ApiResponse.error("ErrorCoinCount"));
     }
 
     //메인 페이지
@@ -125,13 +125,13 @@ public class MemberService {
                 }
             }
             if (pageable.getPageNumber() == 0) { // 첫번 째 페이지면
-                return ApiResponse.success("첫번째 메인페이지 성공", mainAllPageZeroDto);
+                return ApiResponse.success("SuccessFirstMainPageAccess", mainAllPageZeroDto);
             } else {
-                return ApiResponse.success("메인페이지 성공", mainAllDto);
+                return ApiResponse.success("SuccessMainPageUpToOne", mainAllDto);
             }
         }
 
-        return ApiResponse.error("메인페이지 실패");
+        return ApiResponse.error("FailMainPage");
     }
 
     // 마이페이지에서 보유 코인이랑, 나의 포스트잇 개수 전달
@@ -143,9 +143,9 @@ public class MemberService {
             MyPageDto myPageDto = MyPageDto.builder()
                     .myStickyCount(stickyNoteRepository.findMyStickyNoteCount(member.get().getId()))
                     .build();
-            return ApiResponse.success("Mypage", myPageDto);
+            return ApiResponse.success("SuccessToAccessMypage", myPageDto);
         }
-        return ApiResponse.error("Mypage error");
+        return ApiResponse.error("ErrorToAccessMypage");
     }
 
     // 개인정보 수정 버튼 눌렀을 때
@@ -156,16 +156,16 @@ public class MemberService {
             UserDetailsDto userDetailsDto = UserDetailsDto.builder()
                     .member(member.get())
                     .build();
-            return ApiResponse.success("유저 기존 개인정보", userDetailsDto);
+            return ApiResponse.success("UserInformation", userDetailsDto);
         }
-        return ApiResponse.error("유저 기존 개인정보 에러");
+        return ApiResponse.error("ErrorUserInformation");
     }
 
     // 개인정보 수정 완료 버튼 눌렀을 때
     public ApiResponse endModify(HttpServletRequest request, UserDetailsDto userDetailsDto) {
         Optional<Member> member = getMemberFromToken(request);
         member.ifPresent(value -> value.newRegister(userDetailsDto));
-        return ApiResponse.success("Success to modify");
+        return ApiResponse.success("SuccessToModify");
     }
 
     // 마이페이지 - 내가 등록한 포스트잇 확인
@@ -186,9 +186,9 @@ public class MemberService {
                         .build();
                 stickyAllDto.addStickyIdDto((stickyIdDto));
             }
-            return ApiResponse.success("내가 등록한 포스트잇 확인", stickyAllDto);
+            return ApiResponse.success("ExistRegisterPostIt", stickyAllDto);
         }
-        return ApiResponse.error("내가 등록한 포스트잇 확인 실패");
+        return ApiResponse.error("DoesNotExistRegisterPostIt");
     }
 
     // 마이페이지 - 내가 구매한 포스트잇 확인
@@ -209,9 +209,9 @@ public class MemberService {
                         .build();
                 stickyAllDto.addStickyIdDto((stickyIdDto));
             }
-            return ApiResponse.success("내가 구매한 포스트잇 확인", stickyAllDto);
+            return ApiResponse.success("ExistBuyPostIt", stickyAllDto);
         }
-        return ApiResponse.error("내가 구매한 포스트잇 확인 실패");
+        return ApiResponse.error("DoesNotExistBuyPostIt");
 
     }
 
@@ -220,9 +220,9 @@ public class MemberService {
         Optional<Member> member = getMemberFromToken(request);
         if (member.isPresent()) {
             memberRepository.delete(member.get());
-            return ApiResponse.success("회원 삭제 성공");
+            return ApiResponse.success("SuccessDeleteUser");
         }
-        return ApiResponse.error("회원 삭제 실패");
+        return ApiResponse.error("ErrorDeleteUser");
     }
 
 
@@ -232,24 +232,11 @@ public class MemberService {
         Optional<StickyNote> stickyNote = stickyNoteRepository.findById(stickyId);
         if (member.isPresent() && stickyNote.isPresent()) {
             purchaseRepository.deleteByBuyerAndStickyNote(member.get(), stickyNote.get());
-            return ApiResponse.success("포스트잇 삭제 완료");
+            return ApiResponse.success("CompletedToRemove");
         }
-        return ApiResponse.error("포스트잇 삭제 실패");
+        return ApiResponse.error("FailedToRemove");
     }
 
-    //코인, 포스트잇 개수 구하는 메서드
-    @Transactional(readOnly = true)
-    public ApiResponse getCoinAndStickyCount(HttpServletRequest request){
-        Optional<Member> member = getMemberFromToken(request);
-        if (member.isPresent()) {
-            MyPageDto myPageDto = MyPageDto.builder()
-                    .myCoinCount(member.get().getCoin())
-                    .myStickyCount(stickyNoteRepository.findMyStickyNoteCount(member.get().getId()))
-                    .build();
-            return ApiResponse.success("# of Coin and StickyNote", myPageDto);
-        }
-        return ApiResponse.error("Mypage error");
-    }
     // JWT 토큰에서 멤버 가져오는 메서드
     @Transactional(readOnly = true)
     public Optional<Member> getMemberFromToken(HttpServletRequest request) {
@@ -257,7 +244,5 @@ public class MemberService {
         Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
         return memberRepository.findById(memberId);
     }
-
-
 
 }
