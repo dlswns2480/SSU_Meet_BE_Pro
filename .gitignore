@@ -6,7 +6,8 @@ build/
 !**/src/test/**/build/
 
 application.yaml
-jwt.yaml
+src/main/resources/jwt.yaml
+src/main/resources/application.properties
 ### STS ###
 .apt_generated
 .classpath
