@@ -5,7 +5,6 @@ import SSU.SSU_Meet_BE.Dto.Sticky.StickyRegisterDto;
 import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Entity.Purchase;
 import SSU.SSU_Meet_BE.Entity.StickyNote;
-import SSU.SSU_Meet_BE.Repository.PagingRepository;
 import SSU.SSU_Meet_BE.Repository.StickyNoteRepository;
 import SSU.SSU_Meet_BE.Service.Members.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,7 +27,7 @@ public class StickyService {
         Optional<Member> member = memberService.getMemberFromToken(request);
         if (member.isPresent()) {
             if (member.get().getNowStickyCount() > 2) { // 포스트잇 등록 개수 조건 체크
-                return ApiResponse.error("포스트잇 최대 등록 개수 초과");
+                return ApiResponse.error("ExceedingPostItRegistrations");
             }
 
             StickyNote stickyNote = StickyNote.builder().stickyRegisterDto(stickyRegisterDto).build();
@@ -36,7 +35,7 @@ public class StickyService {
             member.get().plusCoin(); //등록 시 코인 증가 (조건 plusCoin 안에서 고려)
             member.get().plusRegisterCount(); // 등록 시 포스트잇 등록 개수 증가
         }
-        return ApiResponse.success("포스트잇 등록 성공");
+        return ApiResponse.success("SuccessToRegisterPostIt");
     }
 
     // 포스트잇 구매
@@ -47,10 +46,10 @@ public class StickyService {
         if (member.isPresent() && stickyNote.isPresent()) {
             // 조건 체크
             if (member.get().getCoin() < 1) { // 코인이 부족한 경우
-                return ApiResponse.error("코인이 부족합니다.");
+                return ApiResponse.error("NotEnoughCoin");
             }
             if (stickyNote.get().getIsSold() == 1) { // 팔린 포스트잇일 경우
-                return ApiResponse.error("이미 판매된 포스트잇 입니다.");
+                return ApiResponse.error("AlreadySold");
             }
             // 멤버 코인, 포스트잇 팔림 상태 변경
             member.get().minusCoin(); // -1
@@ -71,6 +70,6 @@ public class StickyService {
             // 포스트잇 주인 등록 갯수 마이너스
             registerMember.minusRegisterCount();
         }
-        return ApiResponse.success("포스트잇 구매 성공");
+        return ApiResponse.success("SuccessToBuyPostIt");
     }
 }
