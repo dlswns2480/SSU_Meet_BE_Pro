@@ -11,15 +11,12 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class StickyInfoDto {
+public class MainInfoDto {
     private String birthDate;
     private Integer age;
     private String college;
     private String major;
     private Integer height;
-    private String instaId;
-    private String kakaoId;
-    private String phoneNumber;
     private String nickname;
     private String mbti;
     private List<String> hobbies = new ArrayList<>();
@@ -27,17 +24,15 @@ public class StickyInfoDto {
     private String introduce;
 
     @Builder
-    public StickyInfoDto(Member member, StickyNote stickyNote) {
+    public MainInfoDto(Member member, StickyNote stickyNote) {
         this.birthDate = member.getBirthDate();
         this.age = member.getAge();
         this.college = member.getCollege();
         this.major = member.getMajor();
         this.height = member.getHeight();
-        this.instaId = member.getInstaId();
-        this.kakaoId = member.getKakaoId();
-        this.phoneNumber = member.getPhoneNumber();
         this.nickname = stickyNote.getNickName();
         this.mbti = stickyNote.getMbti();
+        this.introduce = stickyNote.getIntroduce();
 
         List<String> hobbies = stickyNote.getHobbies().stream()
                 .map(Hobby::getHobby)
@@ -48,7 +43,5 @@ public class StickyInfoDto {
                 .map(Ideal::getIdealType)
                 .toList();
         this.ideals.addAll(ideals);
-
-        this.introduce = stickyNote.getIntroduce();
     }
 }

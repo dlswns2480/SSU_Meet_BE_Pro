@@ -8,12 +8,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MyPageDto {
-    private Integer myCoinCount;
     private Integer myStickyCount;
 
     @Builder
-    public MyPageDto(Integer myCoinCount, Integer myStickyCount) {
-        this.myCoinCount = myCoinCount;
+    public MyPageDto(Integer myStickyCount) {
         this.myStickyCount = myStickyCount;
     }
 }
