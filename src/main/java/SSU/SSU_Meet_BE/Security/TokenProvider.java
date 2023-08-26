@@ -1,5 +1,6 @@
 package SSU.SSU_Meet_BE.Security;
 
+import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.context.annotation.PropertySource;
@@ -29,23 +30,53 @@ public class TokenProvider {
         this.issuer = issuer;
     }
 
-    public String createToken(String userSpecification) {
+    public String createAccessToken(String userSpecification) {
         return Jwts.builder()
+                .setHeaderParam(Header.TYPE, Header.JWT_TYPE) // 헤더 typ : JWT
                 .signWith(new SecretKeySpec(secretKey.getBytes(), SignatureAlgorithm.HS512.getJcaName()))   // HS512 알고리즘을 사용하여 secretKey를 이용해 서명
-                .setSubject(userSpecification)  // JWT 토큰 제목
+                .setSubject(userSpecification)  // JWT 토큰 제목 (내용 SUB)
                 .setIssuer(issuer)  // JWT 토큰 발급자
                 .setIssuedAt(Timestamp.valueOf(LocalDateTime.now()))    // JWT 토큰 발급 시간
                 .setExpiration(Date.from(Instant.now().plus(expirationHours, ChronoUnit.HOURS)))    // JWT 토큰 만료 시간
                 .compact(); // JWT 토큰 생성
     }
 
+    //refresh 토큰 제작하는 함수 작성     //현규
+    public String createRefreshToken(String studentNumber) {
+        return Jwts.builder()
+                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+                .signWith(new SecretKeySpec(secretKey.getBytes(), SignatureAlgorithm.HS512.getJcaName()))
+                .setSubject(studentNumber)  // Use studentNumber as the subject of the token
+                .setIssuer(issuer)
+                .setIssuedAt(Timestamp.valueOf(LocalDateTime.now()))
+                .setExpiration(Date.from(Instant.now().plus(expirationHours, ChronoUnit.HOURS)))
+                .compact();
+    }
+
+
     public String validateTokenAndGetSubject(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(secretKey.getBytes())
+                .setSigningKey(secretKey.getBytes()) //비밀값으로 복호화
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
     }
-}
 
+    //현규
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(secretKey.getBytes())
+                    .build()
+                    .parseClaimsJws(token);
+            return true; // Token is valid
+        } catch (Exception e) {
+            return false; // Token validation failed
+        }
+    }
+
+
+
+
+}

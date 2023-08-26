@@ -7,6 +7,6 @@ public record SignInResponse(
         String studentNumber,
         @Schema(description = "토큰 타입", example = "bearer")
         String tokenType,
-        @Schema(description = "JWT 토큰", example = "jwtjwtjwtjwtjwtjwtjwtjwt")
+        @Schema(description = "Access 토큰", example = "jwtjwtjwtjwtjwtjwtjwtjwt")
         String accessToken	// 추가
 ){}

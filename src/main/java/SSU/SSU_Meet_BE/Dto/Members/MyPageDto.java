@@ -15,12 +15,3 @@ public class MyPageDto {
         this.myStickyCount = myStickyCount;
     }
 }
-
-//@Data
-//@NoArgsConstructor(access = AccessLevel.PROTECTED)
-//@Builder
-//public class MyPageDto {
-//    private final Integer myCoinCount;
-//    private final Integer myStickyCount;
-//
-//}

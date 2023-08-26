@@ -9,11 +9,9 @@ import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
 import SSU.SSU_Meet_BE.Dto.Sticky.*;
 import SSU.SSU_Meet_BE.Entity.Gender;
 import SSU.SSU_Meet_BE.Entity.Member;
+import SSU.SSU_Meet_BE.Entity.RefreshToken;
 import SSU.SSU_Meet_BE.Entity.StickyNote;
-import SSU.SSU_Meet_BE.Repository.MemberRepository;
-import SSU.SSU_Meet_BE.Repository.PagingRepository;
-import SSU.SSU_Meet_BE.Repository.PurchaseRepository;
-import SSU.SSU_Meet_BE.Repository.StickyNoteRepository;
+import SSU.SSU_Meet_BE.Repository.*;
 import SSU.SSU_Meet_BE.Security.JwtAuthenticationFilter;
 import SSU.SSU_Meet_BE.Security.TokenProvider;
 import SSU.SSU_Meet_BE.Service.JsoupService;
@@ -38,6 +36,7 @@ public class MemberService {
     private final StickyNoteRepository stickyNoteRepository;
     private final PagingRepository pagingRepository;
     private final PurchaseRepository purchaseRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final TokenProvider tokenProvider;
     private final JsoupService jsoupService;
@@ -48,31 +47,65 @@ public class MemberService {
 //        return tokenProvider.validateTokenAndGetSubject(token);
 //    }
 
-    public ApiResponse login(SignInDto signInDto) throws IOException {
-        if (jsoupService.crawling(signInDto)) {      // 유세인트 조회 성공하면
-            Optional<Member> findUser = memberRepository.findByStudentNumber(signInDto.getStudentNumber());
-            if (findUser.isPresent()) { // DB에 있으면
-                if (findUser.get().getFirstRegisterCheck().equals(1)) { // 첫 등록 했을 경우
-                    return ApiResponse.success("RegisteredUser", makeJWT(signInDto));
-                } else { // 첫 등록 안 했을 경우
-                    return ApiResponse.success("RequiredFirstRegistration", makeJWT(signInDto));
+//    public ApiResponse login(SignInDto signInDto) throws IOException {
+//        if (jsoupService.crawling(signInDto)) {      // 유세인트 조회 성공하면
+//            Optional<Member> findUser = memberRepository.findByStudentNumber(signInDto.getStudentNumber());
+//            if (findUser.isPresent()) { // DB에 있으면
+//                if (findUser.get().getFirstRegisterCheck().equals(1)) { // 첫 등록 했을 경우
+//                    return ApiResponse.success("RegisteredUser", makeJWT(signInDto));
+//                } else { // 첫 등록 안 했을 경우
+//                    return ApiResponse.success("RequiredFirstRegistration", makeJWT(signInDto));
+//                }
+//            } else { // DB에 없으면 Member save 후 개인정보 등록
+//                Member member = Member.builder().studentNumber(signInDto.getStudentNumber()).build();
+//                memberRepository.save(member);
+//                return ApiResponse.success("RequiredFirstRegistration", makeJWT(signInDto));
+//            }
+//        } else {                   // 유세인트 조회 실패
+//            return ApiResponse.error("FailedToLogin");
+//        }
+//    }
+
+    //현규
+    public ApiResponse login(HttpServletRequest request,SignInDto signInDto) throws IOException {
+        if (jsoupService.crawling(signInDto)) {
+            Optional<Member> findUser = memberRepository.findByStudentNumber(signInDto.getStudentNumber()); //회원db에서 찾기
+            if (findUser.isPresent()) { //db에 회원으로 존재
+                Member existingMember = findUser.get();
+                Optional<RefreshToken> refreshToken = refreshTokenRepository.findByStudentNumber(existingMember.getStudentNumber());//db에 refresh token이 있는지 확인
+                if(refreshToken.isPresent()){ //refresh token이 db에 존재한다면
+                    //refresh Token 유효성 검증도 진행해야함. 만일 refreshToken 만료시 다시 access, refresh 둘다 재발급진행
+                    if(!tokenProvider.validateToken(refreshToken.get().getRefreshToken())){
+
+                    }
+                    String accessToken = jwtAuthenticationFilter.parseBearerToken(request); //access token 유효성 검증
+                    if (tokenProvider.validateToken(accessToken)){
+                        return ApiResponse.success("ExistingMember"); //access token 유효한 유저
+                    }
+                    else{ //access token 만료되어 refreshToken 요청하는 return
+
+                    }
                 }
-            } else { // DB에 없으면 Member save 후 개인정보 등록
+            }
+            else{ //refresh token이 db에 존재하지 않는다면 회원이 아니란 의미와 같으므로 회원db에 정보 저장 및 access, refresh token 발급진행.
                 Member member = Member.builder().studentNumber(signInDto.getStudentNumber()).build();
                 memberRepository.save(member);
-                return ApiResponse.success("RequiredFirstRegistration", makeJWT(signInDto));
             }
-        } else {                   // 유세인트 조회 실패
+        }
+        else{                           // 유세인트 조회실패
             return ApiResponse.error("FailedToLogin");
         }
+
     }
+
+
     @Transactional(readOnly = true)
     public SignInResponse makeJWT(SignInDto request) { // JWT 토큰 발급
         Member member = memberRepository.findByStudentNumber(request.getStudentNumber())
                 .filter(it -> it.getStudentNumber().equals(request.getStudentNumber()))
                 .orElseThrow(() -> new IllegalArgumentException("학번 오류 발생"));
-        String token = tokenProvider.createToken(String.format("%s:%s", member.getId(), member.getType()));	// 토큰 생성
-        return new SignInResponse(member.getStudentNumber(),"bearer", token);	// 생성자에 토큰 추가
+        String accessToken = tokenProvider.createAccessToken(String.format("%s:%s", member.getId(), member.getType()));	// 토큰 생성
+        return new SignInResponse(member.getStudentNumber(),"bearer", accessToken);	// 생성자에 토큰 추가
     }
 
     public ApiResponse newRegister(HttpServletRequest request, UserDetailsDto userDetailsDto) {
@@ -242,7 +275,8 @@ public class MemberService {
     public Optional<Member> getMemberFromToken(HttpServletRequest request) {
         String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
         Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
-        return memberRepository.findById(memberId);
+        return memberRepository.findById(memberId); /** 여기 예외처리 해야할듯 */
+                //.orElseThrow(() -> ApiResponse.error("WrongTokenMemberID"));
     }
 
 }

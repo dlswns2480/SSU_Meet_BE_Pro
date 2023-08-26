@@ -10,9 +10,9 @@ import java.util.List;
 @Data
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 public class MainAllPageZeroDto {
-        private Integer myStickyCount;
-        private long allStickyCount;
-        private List<MainIdDto> stickyData = new ArrayList<>();
+    private Integer myStickyCount;
+    private long allStickyCount;
+    private List<MainIdDto> stickyData = new ArrayList<>();
 
     public void addBasicCounts(Integer myStickyCount) {
         this.myStickyCount = myStickyCount;
