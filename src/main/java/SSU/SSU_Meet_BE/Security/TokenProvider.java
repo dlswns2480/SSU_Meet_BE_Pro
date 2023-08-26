@@ -17,16 +17,19 @@ import java.util.Date;
 @Service
 public class TokenProvider {
     private final String secretKey;
-    private final long expirationHours;
+    private final long access_expirationHours;
+    private final long refresh_expirationHours;
     private final String issuer;
 
     public TokenProvider(
             @Value("${secret-key}") String secretKey,
-            @Value("${expiration-hours}") long expirationHours,
+            @Value("${access-expiration-hours}") long access_expirationHours,
+            @Value("${refresh-expiration-hours}") long refresh_expirationHours,
             @Value("${issuer}") String issuer
     ) {
         this.secretKey = secretKey;
-        this.expirationHours = expirationHours;
+        this.access_expirationHours = access_expirationHours;
+        this.refresh_expirationHours = refresh_expirationHours;
         this.issuer = issuer;
     }
 
@@ -37,7 +40,7 @@ public class TokenProvider {
                 .setSubject(userSpecification)  // JWT 토큰 제목 (내용 SUB)
                 .setIssuer(issuer)  // JWT 토큰 발급자
                 .setIssuedAt(Timestamp.valueOf(LocalDateTime.now()))    // JWT 토큰 발급 시간
-                .setExpiration(Date.from(Instant.now().plus(expirationHours, ChronoUnit.HOURS)))    // JWT 토큰 만료 시간
+                .setExpiration(Date.from(Instant.now().plus(access_expirationHours, ChronoUnit.HOURS)))    // JWT 토큰 만료 시간
                 .compact(); // JWT 토큰 생성
     }
 
@@ -49,10 +52,9 @@ public class TokenProvider {
                 .setSubject(studentNumber)  // Use studentNumber as the subject of the token
                 .setIssuer(issuer)
                 .setIssuedAt(Timestamp.valueOf(LocalDateTime.now()))
-                .setExpiration(Date.from(Instant.now().plus(expirationHours, ChronoUnit.HOURS)))
+                .setExpiration(Date.from(Instant.now().plus(refresh_expirationHours, ChronoUnit.HOURS)))
                 .compact();
     }
-
 
     public String validateTokenAndGetSubject(String token) {
         return Jwts.parserBuilder()
