@@ -1,24 +1,22 @@
 package SSU.SSU_Meet_BE.Service.Members;
 
 import SSU.SSU_Meet_BE.Common.ApiResponse;
-import SSU.SSU_Meet_BE.Dto.Members.MyCoinDto;
-import SSU.SSU_Meet_BE.Dto.Members.MyPageDto;
-import SSU.SSU_Meet_BE.Dto.Members.SignInDto;
-import SSU.SSU_Meet_BE.Common.SignInResponse;
-import SSU.SSU_Meet_BE.Dto.Members.UserDetailsDto;
+import SSU.SSU_Meet_BE.Common.SignInResponseNoRefresh;
+import SSU.SSU_Meet_BE.Dto.Members.*;
+import SSU.SSU_Meet_BE.Common.SignInResponseWithRefresh;
 import SSU.SSU_Meet_BE.Dto.Sticky.*;
 import SSU.SSU_Meet_BE.Entity.Gender;
 import SSU.SSU_Meet_BE.Entity.Member;
+import SSU.SSU_Meet_BE.Entity.RefreshToken;
 import SSU.SSU_Meet_BE.Entity.StickyNote;
-import SSU.SSU_Meet_BE.Repository.MemberRepository;
-import SSU.SSU_Meet_BE.Repository.PagingRepository;
-import SSU.SSU_Meet_BE.Repository.PurchaseRepository;
-import SSU.SSU_Meet_BE.Repository.StickyNoteRepository;
+import SSU.SSU_Meet_BE.Exception.JwtExceptions;
+import SSU.SSU_Meet_BE.Repository.*;
 import SSU.SSU_Meet_BE.Security.JwtAuthenticationFilter;
 import SSU.SSU_Meet_BE.Security.TokenProvider;
 import SSU.SSU_Meet_BE.Service.JsoupService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,12 +30,14 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class MemberService {
 
     private final MemberRepository memberRepository;
     private final StickyNoteRepository stickyNoteRepository;
     private final PagingRepository pagingRepository;
     private final PurchaseRepository purchaseRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final TokenProvider tokenProvider;
     private final JsoupService jsoupService;
@@ -48,31 +48,71 @@ public class MemberService {
 //        return tokenProvider.validateTokenAndGetSubject(token);
 //    }
 
-    public ApiResponse login(SignInDto signInDto) throws IOException {
+    public ApiResponse login(HttpServletRequest request, SignInDto signInDto) throws IOException {
         if (jsoupService.crawling(signInDto)) {      // 유세인트 조회 성공하면
             Optional<Member> findUser = memberRepository.findByStudentNumber(signInDto.getStudentNumber());
             if (findUser.isPresent()) { // DB에 있으면
                 if (findUser.get().getFirstRegisterCheck().equals(1)) { // 첫 등록 했을 경우
-                    return ApiResponse.success("RegisteredUser", makeJWT(signInDto));
+                    log.info("----");
+                    return tokenCheck(request, signInDto, findUser.get(), "RegisteredUser"); // 토큰 체크
                 } else { // 첫 등록 안 했을 경우
-                    return ApiResponse.success("RequiredFirstRegistration", makeJWT(signInDto));
+                    return tokenCheck(request, signInDto, findUser.get(), "RequiredFirstRegistration"); // 토큰 체크
                 }
             } else { // DB에 없으면 Member save 후 개인정보 등록
                 Member member = Member.builder().studentNumber(signInDto.getStudentNumber()).build();
                 memberRepository.save(member);
-                return ApiResponse.success("RequiredFirstRegistration", makeJWT(signInDto));
+                return tokenCheck(request, signInDto, findUser.get(), "RequiredFirstRegistration"); // 토큰 체크
             }
         } else {                   // 유세인트 조회 실패
             return ApiResponse.error("FailedToLogin");
         }
     }
+
+    // 공통 - 토큰 체크
+    private ApiResponse tokenCheck(HttpServletRequest request, SignInDto signInDto, Member findUser, String message) {
+        MakeJwtDto makeJwtDto = new MakeJwtDto(findUser.getId(), findUser.getStudentNumber(), findUser.getType());
+        if (jwtAuthenticationFilter.parseBearerToken(request) == null) { // 클라이언트가 보낸 access token이 없으면
+            log.info("12313");
+            return ApiResponse.success(message, makeJWT(makeJwtDto));
+        } else { // 클라이언트가 보낸 access token이 있으면
+            log.info("???");
+            try {
+                String accessToken = tokenProvider.validateTokenAndGetSubject(jwtAuthenticationFilter.parseBearerToken(request)); // 액세스 토큰 유효성 검증
+                log.info("***");
+                return ApiResponse.success(message, new SignInResponseNoRefresh(findUser.getStudentNumber(), "bearer", jwtAuthenticationFilter.parseBearerToken(request))); // 기존 액세스 토큰 그대로 전달
+            } catch (JwtExceptions e) {
+                log.info("!!!");
+                return ApiResponse.error(e.getMessage()); // refresh token 이용해서 access token 다시 받을 수 있도록
+            }
+
+        }
+    }
+
+    // refresh 토큰 이용하여 access 토큰 재발급
+    public ApiResponse newAccessToken(HttpServletRequest request, String refreshToken) {
+        String result = tokenProvider.validateRefreshTokenAndGetSubject(refreshToken);
+        Optional<Member> member = getMemberFromToken(request);
+        if (!result.equals("expired") && !result.equals("not issuer") && !result.equals("error")) { // refresh 토큰이 유효하면
+            String accessToken = tokenProvider.createToken(String.format("%s:%s", member.get().getId(), member.get().getType()));    // 액세스 토큰 생성
+            return ApiResponse.success("NewAccessToken", new SignInResponseNoRefresh(member.get().getStudentNumber(), "bearer", accessToken));
+        } else { // refresh 토큰이 유효하지 않다면
+            return ApiResponse.error("RefreshTokenExpired"); // 클라이언트는 새로 로그인을 해야 함.
+        }
+    }
+
+    // JWT 토큰 발급 (access + refresh)
     @Transactional(readOnly = true)
-    public SignInResponse makeJWT(SignInDto request) { // JWT 토큰 발급
-        Member member = memberRepository.findByStudentNumber(request.getStudentNumber())
-                .filter(it -> it.getStudentNumber().equals(request.getStudentNumber()))
-                .orElseThrow(() -> new IllegalArgumentException("학번 오류 발생"));
-        String token = tokenProvider.createToken(String.format("%s:%s", member.getId(), member.getType()));	// 토큰 생성
-        return new SignInResponse(member.getStudentNumber(),"bearer", token);	// 생성자에 토큰 추가
+    public SignInResponseWithRefresh makeJWT(MakeJwtDto makeJwtDto) {
+        String accessToken = tokenProvider.createToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));	// 액세스 토큰 생성
+        String refreshToken = tokenProvider.createRefreshToken(String.format("%s", makeJwtDto.getId()));	// 리프레시 토큰 생성
+        RefreshToken rt = RefreshToken.builder().memberId(makeJwtDto.getId()).refreshToken(refreshToken).build();
+        if (refreshTokenRepository.existsByMemberId(rt.getMemberId())) { // 해당 멤버가 이미 refresh token을 가지고 있으면
+            rt.updateRefreshToken(rt.getRefreshToken()); // refresh token update
+        } else {  // 해당 멤버가 refresh token가 없으면
+            refreshTokenRepository.save(rt); // refresh token create
+
+        }
+        return new SignInResponseWithRefresh(makeJwtDto.getStudentNumber(),"bearer", accessToken, refreshToken);	// 생성자에 토큰 추가
     }
 
     public ApiResponse newRegister(HttpServletRequest request, UserDetailsDto userDetailsDto) {
@@ -244,5 +284,4 @@ public class MemberService {
         Long memberId = Long.parseLong(tokenProvider.validateTokenAndGetSubject(token).split(":")[0]);
         return memberRepository.findById(memberId);
     }
-
 }
