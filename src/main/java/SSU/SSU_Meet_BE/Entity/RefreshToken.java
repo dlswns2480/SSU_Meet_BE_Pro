@@ -18,18 +18,17 @@ public class RefreshToken {
     private Long id;
 
     @Column(name = "studentNumber", nullable = false, unique = true)
-    private Long studentNumber;
+    private String studentNumber;
 
     @Column(name = "refresh_token", nullable = false)
     private String refreshToken;
 
-    public RefreshToken(Long studentNumber, String refreshToken){
+    public RefreshToken(String studentNumber, String refreshToken){
         this.studentNumber = studentNumber;
         this.refreshToken = refreshToken;
     }
 
-    public RefreshToken update(String newRefreshToken){
+    public void update(String newRefreshToken){
         this.refreshToken = newRefreshToken;
-        return this;
     }
 }

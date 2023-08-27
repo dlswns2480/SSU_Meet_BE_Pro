@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    public String parseBearerToken(HttpServletRequest request) {
+    public String parseBearerToken(HttpServletRequest request) { //access token만 인자에서 꺼내오는 함수
         return Optional.ofNullable(request.getHeader(HttpHeaders.AUTHORIZATION))
                 .filter(token -> token.substring(0, 7).equalsIgnoreCase("Bearer "))
                 .map(token -> token.substring(7))
@@ -49,7 +49,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .map(tokenProvider::validateTokenAndGetSubject)
                 .orElse("anonymous:anonymous")
                 .split(":");
-
         return new User(split[0], "", List.of(new SimpleGrantedAuthority(split[1])));
     }
 }

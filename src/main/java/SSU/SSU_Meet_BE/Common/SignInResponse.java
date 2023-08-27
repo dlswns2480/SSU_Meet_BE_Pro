@@ -8,5 +8,7 @@ public record SignInResponse(
         @Schema(description = "토큰 타입", example = "bearer")
         String tokenType,
         @Schema(description = "Access 토큰", example = "jwtjwtjwtjwtjwtjwtjwtjwt")
-        String accessToken	// 추가
+        String accessToken,
+        @Schema(description = "Refresh 토큰", example = "jwtjwtjwtjwtjwtjwtjwtjwt")
+        String refreshToken
 ){}

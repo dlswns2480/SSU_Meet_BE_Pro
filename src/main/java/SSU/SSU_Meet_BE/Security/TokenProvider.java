@@ -65,7 +65,6 @@ public class TokenProvider {
                 .getSubject();
     }
 
-    //현규
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()

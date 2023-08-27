@@ -26,9 +26,14 @@ public class MemberController {
 
     @Operation(summary = "로그인 & JWT 토큰 발급")
     @PostMapping("/login")
-    //현규
     public ApiResponse login(HttpServletRequest request,@RequestBody SignInDto signInDto) throws IOException {
         return memberService.login(request,signInDto);
+    }
+
+    @Operation(summary = "RefreshToken 수신")
+    @PostMapping("/new/accesstoken")
+    public ApiResponse refreshtoken(HttpServletRequest request, @RequestBody SignInDto signInDto) throws IOException{
+        return memberService.needRefreshToken(request,signInDto);
     }
 
     @Operation(summary = "개인정보 등록")

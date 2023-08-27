@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 
@@ -74,34 +75,18 @@ public class MemberService {
                 String accessToken = jwtAuthenticationFilter.parseBearerToken(request);
                 Optional<RefreshToken> refreshToken = refreshTokenRepository.findByStudentNumber(existingMember.getStudentNumber()); // 아직 refreshtoken이 있는지 없는지는 모름
                 if (accessToken == null) { //인자에 accessToken이 없을 때 -> 두 종류 토큰 둘다 재발행
-                    String newAccessToken = tokenProvider.createAccessToken(String.format("%s:%s", existingMember.getId(), existingMember.getType())); //액세스토큰 생성
-                    String newRefreshToken = tokenProvider.createRefreshToken(existingMember.getStudentNumber()); /**리프레시토큰 만드는 로직 재정비 필요 */
-                    refreshToken.ifPresent(token -> token.update(newRefreshToken)); //일단 refresh db에 존재해있던 과거 토큰 지우고 만약 없었더라면 새롭게 삽입
-                    refreshTokenRepository.save(newRefreshToken); //db 업데이트
-                    return ApiResponse.success("NewAccessToken", newAccessToken);
+                    return ApiResponse.success("NewBothToken", makeBothTokens(findUser.get()));
                 } else { //액세스토큰이 인자에 있을 때
                     if (tokenProvider.validateToken(accessToken)) {
                         return ApiResponse.success("ExistingMember");
-                    } else { //액세스토큰 만료, refresh 토큰 유효성 검증
-                        if (refreshToken.isPresent() &&tokenProvider.validateToken(refreshToken.get().getRefreshToken())) {
-                            String newAccessToken = tokenProvider.createAccessToken(String.format("%s:%s", existingMember.getId(), existingMember.getType())); //액세스토큰 재발행
-                            return ApiResponse.success("NewAccessToken", newAccessToken);
-                        } else { //refresh 토큰도 만료된다면 두 종류 토큰 재발행
-                            String newAccessToken = tokenProvider.createAccessToken(String.format("%s:%s", existingMember.getId(), existingMember.getType())); //액세스토큰 생성
-                            String newRefreshToken = tokenProvider.createRefreshToken(existingMember.getStudentNumber()); /**리프레시토큰 만드는 로직 재정비 필요 */
-                            refreshToken.ifPresent(token -> token.update(newRefreshToken));
-                            refreshTokenRepository.save(newRefreshToken); //db 업데이트
-                            return ApiResponse.success("NewAccessToken", newAccessToken);
-                        }
+                    } else { //액세스토큰 만료, refresh token 달라고 요청해야함
+                        return ApiResponse.error("NeedRefreshToken");
                     }
                 }
             } else { //refresh token이 db에 존재하지 않는다면 회원이 아니란 의미와 같으므로 회원db에 정보 저장 및 access, refresh token 발급진행.
                 Member newmember = Member.builder().studentNumber(signInDto.getStudentNumber()).build();
                 memberRepository.save(newmember);
-                String newAccessToken = tokenProvider.createAccessToken(String.format("%s:%s", newmember.getId(), newmember.getType())); //액세스토큰 생성
-                String newRefreshToken = tokenProvider.createRefreshToken(newmember.getStudentNumber()); /**리프레시토큰 만드는 로직 재정비 필요 */
-                refreshTokenRepository.save(newRefreshToken); //db 업데이트
-                return ApiResponse.success("RequiredFirstRegistration", newAccessToken);
+                return ApiResponse.success("RequiredFirstRegistration", makeBothTokens(newmember));
             }
         }
         else {                           // 유세인트 조회실패
@@ -110,12 +95,60 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public SignInResponse makeJWT(SignInDto request) { // JWT 토큰 발급
-        Member member = memberRepository.findByStudentNumber(request.getStudentNumber())
-                .filter(it -> it.getStudentNumber().equals(request.getStudentNumber()))
-                .orElseThrow(() -> new IllegalArgumentException("학번 오류 발생"));
+    public SignInResponse makeAccessToken(Member member) { // JWT 토큰 발급
+//        Member member = memberRepository.findByStudentNumber(request.getStudentNumber())
+//                .filter(it -> it.getStudentNumber().equals(request.getStudentNumber()))
+//                .orElseThrow(() -> new IllegalArgumentException("학번 오류 발생"));
         String accessToken = tokenProvider.createAccessToken(String.format("%s:%s", member.getId(), member.getType()));	// 토큰 생성
-        return new SignInResponse(member.getStudentNumber(),"bearer", accessToken);	// 생성자에 토큰 추가
+        return new SignInResponse(member.getStudentNumber(),"bearer", accessToken, "");	// 생성자에 토큰 추가
+    }
+
+    @Transactional(readOnly = true)
+    public SignInResponse makeBothTokens(Member member) { // JWT 토큰 발급
+//        Member member = memberRepository.findByStudentNumber(request.getStudentNumber())
+//                .filter(it -> it.getStudentNumber().equals(request.getStudentNumber()))
+//                .orElseThrow(() -> new IllegalArgumentException("학번 오류 발생"));
+        String accessToken = tokenProvider.createAccessToken(String.format("%s:%s", member.getId(), member.getType()));	// 토큰 생성
+        String refreshToken = tokenProvider.createRefreshToken(member.getStudentNumber());
+        Optional<RefreshToken> originRefreshToken = refreshTokenRepository.findByStudentNumber(member.getStudentNumber());
+//        originRefreshToken.ifPresent(token -> token.update(refreshToken));
+        if(originRefreshToken.isPresent()){
+            originRefreshToken.get().update(refreshToken);
+        }
+        else{
+            originRefreshToken.get().update(refreshToken);
+        }
+        return new SignInResponse(member.getStudentNumber(),"bearer", accessToken, refreshToken);	// 생성자에 토큰 추가
+    }
+
+    public ApiResponse needRefreshToken(HttpServletRequest request, SignInDto signInDto){
+        //받은 refresh token 을 db에 있는 refresh token과 같은지 비교 + 유효한지 확인까지
+        // 토큰이 같고 유효하다면 access토큰만 재발급해서 return
+        // 토큰은 같지만 유효하지 않다면 둘다 재발급해서 return
+        String refreshToken = jwtAuthenticationFilter.parseBearerToken(request);
+        Optional<Member> findUser = memberRepository.findByStudentNumber(signInDto.getStudentNumber());
+        if (findUser.isPresent()){
+            Optional<RefreshToken> originRefreshToken = refreshTokenRepository.findByStudentNumber(findUser.get().getStudentNumber());
+            if(originRefreshToken.isPresent()){
+                if(Objects.equals(refreshToken, originRefreshToken.get().getRefreshToken())){
+                    if (tokenProvider.validateToken(refreshToken)) {
+                        return ApiResponse.success("NewAccessToken",makeAccessToken(findUser.get()));
+                    }
+                    else{
+                        return ApiResponse.success("NewBothTokens",makeBothTokens(findUser.get()));
+                    }
+                }
+                else{
+                    return ApiResponse.error("NotSameRefreshToken");
+                }
+            }
+            else{
+                return ApiResponse.error("UnExistingRefreshToken");
+            }
+        }
+        else{
+            return ApiResponse.error("UnExistingMember");
+        }
     }
 
     public ApiResponse newRegister(HttpServletRequest request, UserDetailsDto userDetailsDto) {
