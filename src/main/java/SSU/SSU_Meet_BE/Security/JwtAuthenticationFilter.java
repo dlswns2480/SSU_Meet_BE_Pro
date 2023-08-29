@@ -1,6 +1,7 @@
 package SSU.SSU_Meet_BE.Security;
 
-import SSU.SSU_Meet_BE.Exception.JwtExceptions;
+import SSU.SSU_Meet_BE.Exception.InvalidTokenException;
+import SSU.SSU_Meet_BE.Exception.TokenExpiredException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,47 +32,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String token = parseBearerToken(request);
         try {
-            log.info("아바이시발");
-            String token = parseBearerToken(request);
-            log.info("그냥 개조같네");
             User user = parseUserSpecification(token);
             AbstractAuthenticationToken authenticated = UsernamePasswordAuthenticationToken.authenticated(user, token, user.getAuthorities());
             authenticated.setDetails(new WebAuthenticationDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authenticated);
 
             filterChain.doFilter(request, response);
-        } catch (JwtExceptions exceptions) {
-            log.info("어미시발");
-            throw new JwtExceptions("doFilterInternal error"); // 토큰 에러
+        } catch (InvalidTokenException e) {
+            log.error("Invalid token: " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+        } catch (TokenExpiredException e) {
+            log.error("Token expired: " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token expired");
+        } catch (Exception e) {
+            log.error("Error while processing token: " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Token processing error");
         }
 
     }
 
     public String parseBearerToken(HttpServletRequest request) {
-        try {
-            return Optional.ofNullable(request.getHeader(HttpHeaders.AUTHORIZATION))
-                    .filter(token -> token.substring(0, 7).equalsIgnoreCase("Bearer "))
-                    .map(token -> token.substring(7))
-                    .orElse(null);
-        } catch (JwtExceptions e) {
-            throw new JwtExceptions("parseBearerToken error"); // 토큰 에러
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorizationHeader == null) {
+            return null;
         }
+        return authorizationHeader.substring(7);
     }
 
     private User parseUserSpecification(String token) {
-        try {
-            log.info("!@!@!@");
-            String[] split = Optional.ofNullable(token)
-                    .filter(subject -> subject.length() >= 10)
-                    .map(tokenProvider::validateTokenAndGetSubject)
-                    .orElse("anonymous:anonymous")
-                    .split(":");
-            log.info("()()())");
-            return new User(split[0], "", List.of(new SimpleGrantedAuthority(split[1])));
-        } catch (JwtExceptions e) {
-            throw new JwtExceptions("parseUserSpecification error"); // 토큰 에러
-        }
+        String[] split = Optional.ofNullable(token)
+                .filter(subject -> subject.length() >= 10)
+                .map(tokenProvider::validateTokenAndGetSubject)
+                .orElse("anonymous:anonymous")
+                .split(":");
+
+        return new User(split[0], "", List.of(new SimpleGrantedAuthority(split[1])));
 
     }
 }

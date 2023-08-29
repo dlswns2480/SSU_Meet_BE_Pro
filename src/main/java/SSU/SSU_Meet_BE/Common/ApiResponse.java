@@ -15,7 +15,6 @@ public record ApiResponse(
         return new ApiResponse(ApiStatus.SUCCESS, message, null);
     }
 
-
     public static ApiResponse error(String message) {
         return new ApiResponse(ApiStatus.ERROR, message, null);
     }

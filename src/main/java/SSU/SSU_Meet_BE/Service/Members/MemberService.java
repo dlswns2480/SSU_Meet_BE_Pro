@@ -9,7 +9,8 @@ import SSU.SSU_Meet_BE.Entity.Gender;
 import SSU.SSU_Meet_BE.Entity.Member;
 import SSU.SSU_Meet_BE.Entity.RefreshToken;
 import SSU.SSU_Meet_BE.Entity.StickyNote;
-import SSU.SSU_Meet_BE.Exception.JwtExceptions;
+import SSU.SSU_Meet_BE.Exception.InvalidTokenException;
+import SSU.SSU_Meet_BE.Exception.TokenExpiredException;
 import SSU.SSU_Meet_BE.Repository.*;
 import SSU.SSU_Meet_BE.Security.JwtAuthenticationFilter;
 import SSU.SSU_Meet_BE.Security.TokenProvider;
@@ -71,20 +72,27 @@ public class MemberService {
     // 공통 - 토큰 체크
     private ApiResponse tokenCheck(HttpServletRequest request, SignInDto signInDto, Member findUser, String message) {
         MakeJwtDto makeJwtDto = new MakeJwtDto(findUser.getId(), findUser.getStudentNumber(), findUser.getType());
-        if (jwtAuthenticationFilter.parseBearerToken(request) == null) { // 클라이언트가 보낸 access token이 없으면
-            log.info("12313");
-            return ApiResponse.success(message, makeJWT(makeJwtDto));
-        } else { // 클라이언트가 보낸 access token이 있으면
-            log.info("???");
-            try {
-                String accessToken = tokenProvider.validateTokenAndGetSubject(jwtAuthenticationFilter.parseBearerToken(request)); // 액세스 토큰 유효성 검증
-                log.info("***");
-                return ApiResponse.success(message, new SignInResponseNoRefresh(findUser.getStudentNumber(), "bearer", jwtAuthenticationFilter.parseBearerToken(request))); // 기존 액세스 토큰 그대로 전달
-            } catch (JwtExceptions e) {
-                log.info("!!!");
-                return ApiResponse.error(e.getMessage()); // refresh token 이용해서 access token 다시 받을 수 있도록
-            }
+        try {
+            String accessToken = jwtAuthenticationFilter.parseBearerToken(request);
 
+            if (accessToken == null) {  // 클라이언트가 보낸 access token이 없으면
+                log.info("Access token is missing. Generating new tokens...");
+                return ApiResponse.success(message, makeJWT(makeJwtDto)); // access , refresh token 생성
+            } else { // 클라이언트가 보낸 access token이 있으면
+                log.info("Access token found. Verifying token...");
+                String subject = tokenProvider.validateTokenAndGetSubject(accessToken); // 액세스 토큰 유효성 검증
+                log.info("Access token is valid.");
+                return ApiResponse.success(message, new SignInResponseNoRefresh(findUser.getStudentNumber(), "bearer", accessToken)); // 기존 액세스 토큰 그대로 전달
+            }
+        } catch (TokenExpiredException e) { // 액세스 토큰이 만료되었을 경우
+            log.error("Access token expired: " + e.getMessage());
+            return ApiResponse.error("Access token expired");
+        } catch (InvalidTokenException e) { // 액세스 토큰이 유효하지 않을 경우
+            log.error("Invalid access token: " + e.getMessage());
+            return ApiResponse.error("Invalid access token");
+        } catch (Exception e) {
+            log.error("Error while processing token: " + e.getMessage());
+            return ApiResponse.error("Token processing error");
         }
     }
 
@@ -101,7 +109,6 @@ public class MemberService {
     }
 
     // JWT 토큰 발급 (access + refresh)
-    @Transactional(readOnly = true)
     public SignInResponseWithRefresh makeJWT(MakeJwtDto makeJwtDto) {
         String accessToken = tokenProvider.createToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));	// 액세스 토큰 생성
         String refreshToken = tokenProvider.createRefreshToken(String.format("%s", makeJwtDto.getId()));	// 리프레시 토큰 생성

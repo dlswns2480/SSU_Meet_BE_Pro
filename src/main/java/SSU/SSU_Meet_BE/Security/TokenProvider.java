@@ -1,6 +1,7 @@
 package SSU.SSU_Meet_BE.Security;
 
-import SSU.SSU_Meet_BE.Exception.JwtExceptions;
+import SSU.SSU_Meet_BE.Exception.InvalidTokenException;
+import SSU.SSU_Meet_BE.Exception.TokenExpiredException;
 import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.PropertySource;
@@ -69,18 +70,16 @@ public class TokenProvider {
                 return claims.getSubject();
             } else {
                 log.info("%%%");
-                throw new JwtExceptions("expired"); // 토큰 만료됨
+                throw new TokenExpiredException("Token has expired"); // 토큰 만료됨
             }
-        } catch (IllegalArgumentException e) {
-            log.info("씨발");
-            throw new JwtExceptions("씨발 error"); // 토큰 에러
+        } catch (ExpiredJwtException e) {
+            throw new TokenExpiredException("Token has expired"); // 토큰 만료됨
+        } catch (MalformedJwtException | SecurityException | IllegalArgumentException e) {
+            throw new InvalidTokenException("Invalid token");
         } catch (JwtException e) {
-            log.info("홀리");
-            throw new JwtExceptions("홀리 error"); // 토큰 에러
-        }  catch(JwtExceptions e) {
-            log.info("&&&");
-            throw new JwtExceptions("&&& error"); // 토큰 에러
+            throw new InvalidTokenException("Token error");
         }
+
 
     }
 
@@ -92,23 +91,19 @@ public class TokenProvider {
                     .parseClaimsJws(refreshToken)
                     .getBody();
 
-            // 리프레시 토큰 검증 조건을 추가 (예: 발급자 확인)
-            if (claims.getIssuer().equals(issuer)) {
-                // 만료 시간 확인
-                Date expiration = claims.getExpiration();
-                if (expiration != null && expiration.after(new Date())) {
-                    return claims.getSubject();
-                } else {
-                    return "expired"; // 토큰 만료됨
-                }
-            } else {
-                return "not issuer"; // 검증 실패 시 null 반환
+            if (!claims.getIssuer().equals(issuer)) {
+                throw new InvalidTokenException("Invalid issuer");
             }
+
+            Date expiration = claims.getExpiration();
+            if (expiration == null || expiration.before(new Date())) {
+                throw new TokenExpiredException("Token expired");
+            }
+
+            return claims.getSubject();
         } catch (JwtException | IllegalArgumentException e) {
-            return "error"; // 검증 실패 시 null 반환
+            throw new InvalidTokenException("Invalid token");
         }
     }
-
-
 }
 
