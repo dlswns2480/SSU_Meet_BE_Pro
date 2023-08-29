@@ -62,7 +62,7 @@ public class MemberService {
             } else { // DB에 없으면 Member save 후 개인정보 등록
                 Member member = Member.builder().studentNumber(signInDto.getStudentNumber()).build();
                 memberRepository.save(member);
-                return tokenCheck(request, signInDto, findUser.get(), "RequiredFirstRegistration"); // 토큰 체크
+                return tokenCheck(request, signInDto, member, "RequiredFirstRegistration"); // 토큰 체크
             }
         } else {                   // 유세인트 조회 실패
             return ApiResponse.error("FailedToLogin");
@@ -97,27 +97,28 @@ public class MemberService {
     }
 
     // refresh 토큰 이용하여 access 토큰 재발급
-    public ApiResponse newAccessToken(HttpServletRequest request, String refreshToken) {
-        String result = tokenProvider.validateRefreshTokenAndGetSubject(refreshToken);
-        Optional<Member> member = getMemberFromToken(request);
-        if (!result.equals("expired") && !result.equals("not issuer") && !result.equals("error")) { // refresh 토큰이 유효하면
+    public ApiResponse newAccessToken(HttpServletRequest request) {
+        try {
+            String result = tokenProvider.validateRefreshTokenAndGetSubject(jwtAuthenticationFilter.parseBearerToken(request));
+            Optional<Member> member = getMemberFromToken(request);
             String accessToken = tokenProvider.createToken(String.format("%s:%s", member.get().getId(), member.get().getType()));    // 액세스 토큰 생성
             return ApiResponse.success("NewAccessToken", new SignInResponseNoRefresh(member.get().getStudentNumber(), "bearer", accessToken));
-        } else { // refresh 토큰이 유효하지 않다면
+        } catch (TokenExpiredException | InvalidTokenException e) {
             return ApiResponse.error("RefreshTokenExpired"); // 클라이언트는 새로 로그인을 해야 함.
         }
     }
-
     // JWT 토큰 발급 (access + refresh)
     public SignInResponseWithRefresh makeJWT(MakeJwtDto makeJwtDto) {
         String accessToken = tokenProvider.createToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));	// 액세스 토큰 생성
-        String refreshToken = tokenProvider.createRefreshToken(String.format("%s", makeJwtDto.getId()));	// 리프레시 토큰 생성
+        String refreshToken = tokenProvider.createRefreshToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));	// 리프레시 토큰 생성
         RefreshToken rt = RefreshToken.builder().memberId(makeJwtDto.getId()).refreshToken(refreshToken).build();
         if (refreshTokenRepository.existsByMemberId(rt.getMemberId())) { // 해당 멤버가 이미 refresh token을 가지고 있으면
-            rt.updateRefreshToken(rt.getRefreshToken()); // refresh token update
+            log.info("^&^&^&^&^&^& start");
+            Optional<RefreshToken> findMemberRefreshToken = refreshTokenRepository.findByMemberId(rt.getMemberId());
+            findMemberRefreshToken.ifPresent(token -> token.updateRefreshToken(rt.getRefreshToken()));
+            log.info("^&^&^&^&^&^& end");
         } else {  // 해당 멤버가 refresh token가 없으면
             refreshTokenRepository.save(rt); // refresh token create
-
         }
         return new SignInResponseWithRefresh(makeJwtDto.getStudentNumber(),"bearer", accessToken, refreshToken);	// 생성자에 토큰 추가
     }

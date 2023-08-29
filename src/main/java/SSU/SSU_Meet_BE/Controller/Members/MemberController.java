@@ -37,8 +37,8 @@ public class MemberController {
 
     @Operation(summary = "access 토큰 재발급 요청")
     @PostMapping("/new/accesstoken")
-    public ApiResponse newAccessToken(HttpServletRequest request, @RequestBody String refreshToken) {
-        return memberService.newAccessToken(request, refreshToken);
+    public ApiResponse newAccessToken(HttpServletRequest request) {
+        return memberService.newAccessToken(request);
     }
 
     @Operation(summary = "개인정보 등록")

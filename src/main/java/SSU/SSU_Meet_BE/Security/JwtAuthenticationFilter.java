@@ -32,6 +32,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (request.getServletPath().equals("/v1/members/login") || request.getServletPath().equals("/v1/mebers//new/accesstoken")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = parseBearerToken(request);
         try {
             User user = parseUserSpecification(token);
@@ -41,15 +46,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
         } catch (InvalidTokenException e) {
-            log.error("Invalid token: " + e.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+            String errorMessage = "Invalid token: " + e.getMessage();
+            log.error(errorMessage);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(errorMessage);
         } catch (TokenExpiredException e) {
-            log.error("Token expired: " + e.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token expired");
-        } catch (Exception e) {
-            log.error("Error while processing token: " + e.getMessage());
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Token processing error");
+            String errorMessage = "Token expired: " + e.getMessage();
+            log.error(errorMessage);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(errorMessage);
         }
+//        catch (Exception e) {
+//            String errorMessage = "Error while processing token: " + e.getMessage();
+//            log.error(errorMessage);
+//            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+//            response.getWriter().write(errorMessage);
+//        }
 
     }
 
