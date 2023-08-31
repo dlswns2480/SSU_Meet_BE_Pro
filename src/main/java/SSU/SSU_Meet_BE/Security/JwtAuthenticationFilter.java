@@ -1,10 +1,13 @@
 package SSU.SSU_Meet_BE.Security;
 
+import SSU.SSU_Meet_BE.Exception.InvalidTokenException;
+import SSU.SSU_Meet_BE.Exception.TokenExpiredException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -23,24 +26,45 @@ import java.util.Optional;
 @Order(0)
 @RequiredArgsConstructor
 @Component
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokenProvider tokenProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (request.getServletPath().equals("/v1/members/login") || request.getServletPath().equals("/v1/mebers//new/accesstoken")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = parseBearerToken(request);
-        User user = parseUserSpecification(token);
-        AbstractAuthenticationToken authenticated = UsernamePasswordAuthenticationToken.authenticated(user, token, user.getAuthorities());
-        authenticated.setDetails(new WebAuthenticationDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authenticated);
-        filterChain.doFilter(request, response);
+        try {
+            User user = parseUserSpecification(token);
+            AbstractAuthenticationToken authenticated = UsernamePasswordAuthenticationToken.authenticated(user, token, user.getAuthorities());
+            authenticated.setDetails(new WebAuthenticationDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authenticated);
+
+            filterChain.doFilter(request, response);
+        } catch (InvalidTokenException e) {
+            String errorMessage = "Invalid token: " + e.getMessage();
+            log.error(errorMessage);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(errorMessage);
+        } catch (TokenExpiredException e) {
+            String errorMessage = "Token expired: " + e.getMessage();
+            log.error(errorMessage);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(errorMessage);
+        }
+
     }
 
-    public String parseBearerToken(HttpServletRequest request) { //access token만 인자에서 꺼내오는 함수
-        return Optional.ofNullable(request.getHeader(HttpHeaders.AUTHORIZATION))
-                .filter(token -> token.substring(0, 7).equalsIgnoreCase("Bearer "))
-                .map(token -> token.substring(7))
-                .orElse(null);
+    public String parseBearerToken(HttpServletRequest request) {
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorizationHeader == null) {
+            return null;
+        }
+        return authorizationHeader.substring(7);
     }
 
     private User parseUserSpecification(String token) {
@@ -49,6 +73,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .map(tokenProvider::validateTokenAndGetSubject)
                 .orElse("anonymous:anonymous")
                 .split(":");
+
         return new User(split[0], "", List.of(new SimpleGrantedAuthority(split[1])));
+
     }
 }

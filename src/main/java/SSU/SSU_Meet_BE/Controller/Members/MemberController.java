@@ -24,16 +24,17 @@ public class MemberController {
     private final JsoupService jsoupService;
     private final MemberRepository memberRepository;
 
+
     @Operation(summary = "로그인 & JWT 토큰 발급")
     @PostMapping("/login")
-    public ApiResponse login(HttpServletRequest request,@RequestBody SignInDto signInDto) throws IOException {
-        return memberService.login(request,signInDto);
+    public ApiResponse login(HttpServletRequest request, @RequestBody SignInDto signInDto) throws IOException {
+        return memberService.login(request, signInDto);
     }
 
-    @Operation(summary = "RefreshToken 수신")
+    @Operation(summary = "access 토큰 재발급 요청")
     @PostMapping("/new/accesstoken")
-    public ApiResponse refreshtoken(HttpServletRequest request, @RequestBody SignInDto signInDto) throws IOException{
-        return memberService.needRefreshToken(request,signInDto);
+    public ApiResponse newAccessToken(HttpServletRequest request) {
+        return memberService.newAccessToken(request);
     }
 
     @Operation(summary = "개인정보 등록")

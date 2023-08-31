@@ -1,8 +1,9 @@
 package SSU.SSU_Meet_BE.Security;
 
-import io.jsonwebtoken.Header;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import SSU.SSU_Meet_BE.Exception.InvalidTokenException;
+import SSU.SSU_Meet_BE.Exception.TokenExpiredException;
+import io.jsonwebtoken.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,69 +16,93 @@ import java.util.Date;
 
 @PropertySource("classpath:jwt.yaml")
 @Service
+@Slf4j
 public class TokenProvider {
     private final String secretKey;
-    private final long access_expirationHours;
-    private final long refresh_expirationHours;
+    private final long expirationMinutes;
+    private final long refreshExpirationMinutes; // 추가 : 리프레시 토큰 유효 기간
     private final String issuer;
 
     public TokenProvider(
             @Value("${secret-key}") String secretKey,
-            @Value("${access-expiration-hours}") long access_expirationHours,
-            @Value("${refresh-expiration-hours}") long refresh_expirationHours,
+            @Value("${expiration-minutes}") long expirationMinutes,
+            @Value("${refresh-expiration-minutes}") long refreshExpirationMinutes,
             @Value("${issuer}") String issuer
     ) {
+
         this.secretKey = secretKey;
-        this.access_expirationHours = access_expirationHours;
-        this.refresh_expirationHours = refresh_expirationHours;
+        this.expirationMinutes = expirationMinutes ;
+        this.refreshExpirationMinutes = refreshExpirationMinutes;
         this.issuer = issuer;
     }
 
-    public String createAccessToken(String userSpecification) {
+    public String createToken(String userSpecification) {
         return Jwts.builder()
-                .setHeaderParam(Header.TYPE, Header.JWT_TYPE) // 헤더 typ : JWT
                 .signWith(new SecretKeySpec(secretKey.getBytes(), SignatureAlgorithm.HS512.getJcaName()))   // HS512 알고리즘을 사용하여 secretKey를 이용해 서명
-                .setSubject(userSpecification)  // JWT 토큰 제목 (내용 SUB)
+                .setSubject(userSpecification)  // JWT 토큰 제목
                 .setIssuer(issuer)  // JWT 토큰 발급자
                 .setIssuedAt(Timestamp.valueOf(LocalDateTime.now()))    // JWT 토큰 발급 시간
-                .setExpiration(Date.from(Instant.now().plus(access_expirationHours, ChronoUnit.HOURS)))    // JWT 토큰 만료 시간
+                .setExpiration(Date.from(Instant.now().plus(expirationMinutes, ChronoUnit.MINUTES)))    // JWT 토큰 만료 시간
                 .compact(); // JWT 토큰 생성
     }
 
-    //refresh 토큰 제작하는 함수 작성     //현규
-    public String createRefreshToken(String studentNumber) {
+    public String createRefreshToken(String userSpecification) {
         return Jwts.builder()
-                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .signWith(new SecretKeySpec(secretKey.getBytes(), SignatureAlgorithm.HS512.getJcaName()))
-                .setSubject(studentNumber)  // Use studentNumber as the subject of the token
+                .setSubject(userSpecification)
                 .setIssuer(issuer)
                 .setIssuedAt(Timestamp.valueOf(LocalDateTime.now()))
-                .setExpiration(Date.from(Instant.now().plus(refresh_expirationHours, ChronoUnit.HOURS)))
+                .setExpiration(Date.from(Instant.now().plus(refreshExpirationMinutes, ChronoUnit.MINUTES)))
                 .compact();
     }
 
     public String validateTokenAndGetSubject(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey.getBytes()) //비밀값으로 복호화
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-    }
-
-    public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey.getBytes())
                     .build()
-                    .parseClaimsJws(token);
-            return true; // Token is valid
-        } catch (Exception e) {
-            return false; // Token validation failed
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            // 만료 시간 확인
+            Date expiration = claims.getExpiration();
+            if (expiration != null && expiration.after(new Date())) {
+                return claims.getSubject();
+            } else {
+                log.info("%%%");
+                throw new TokenExpiredException("Token has expired"); // 토큰 만료됨
+            }
+        } catch (ExpiredJwtException e) {
+            throw new TokenExpiredException("Token has expired"); // 토큰 만료됨
+        } catch (MalformedJwtException | SecurityException | IllegalArgumentException e) {
+            throw new InvalidTokenException("Invalid token");
+        } catch (JwtException e) {
+            throw new InvalidTokenException("Token error");
         }
+
+
     }
 
+    public String validateRefreshTokenAndGetSubject(String refreshToken) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey.getBytes())
+                    .build()
+                    .parseClaimsJws(refreshToken)
+                    .getBody();
 
+            if (!claims.getIssuer().equals(issuer)) {
+                throw new InvalidTokenException("Invalid issuer");
+            }
 
+            Date expiration = claims.getExpiration();
+            if (expiration == null || expiration.before(new Date())) {
+                throw new TokenExpiredException("Token expired");
+            }
 
+            return claims.getSubject();
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new InvalidTokenException("Invalid token");
+        }
+    }
 }
