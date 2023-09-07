@@ -118,6 +118,7 @@ public class MemberService {
                         .stickyNote(mainStickyNote)
                         .mainInfoDto(mainInfoDto)
                         .build();
+
                 mainAllPageZeroDto.addMainIdDto(mainIdDto);
                 mainAllDto.addMainIdDto(mainIdDto);
             }

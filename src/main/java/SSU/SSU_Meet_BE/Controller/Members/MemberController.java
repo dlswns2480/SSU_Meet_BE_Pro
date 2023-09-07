@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 
 @Tag(name = "멤버 관련 API")
+@CrossOrigin(maxAge = 3600)
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/v1/members")
@@ -95,6 +96,13 @@ public class MemberController {
         return memberService.deleteMEmber(request);
     }
 
+
+    @Operation(summary = "코인, 포스트잇 개수")
+    @GetMapping("coin")
+    public ApiResponse getCoinAndStickyNote(HttpServletRequest request)
+    {
+        return memberService.getCoinAndStickyCount(request);
+    }
 }
 
 
