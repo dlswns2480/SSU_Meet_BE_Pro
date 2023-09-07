@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (request.getServletPath().equals("/v1/members/login") || request.getServletPath().equals("/v1/mebers//new/accesstoken")) {
+        if (request.getServletPath().equals("/v1/members/login") || request.getServletPath().equals("/v1/members/new/accesstoken")) {
             filterChain.doFilter(request, response);
             return;
         }

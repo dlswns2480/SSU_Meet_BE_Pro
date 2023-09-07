@@ -142,6 +142,7 @@ public class MemberService {
     //메인 페이지
     @Transactional(readOnly = true)
     public ApiResponse mainPage(HttpServletRequest request, Pageable pageable) {
+//        tokenCheck(request);
         Optional<Member> member = getMemberFromToken(request);
         if (member.isPresent()) {
             Page<StickyNote> allStickyNoteList;
