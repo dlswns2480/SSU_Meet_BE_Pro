@@ -32,11 +32,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (request.getServletPath().equals("/v1/members/login") || request.getServletPath().equals("/v1/mebers//new/accesstoken")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String token = parseBearerToken(request);
         try {
             User user = parseUserSpecification(token);
@@ -45,16 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authenticated);
 
             filterChain.doFilter(request, response);
-        } catch (InvalidTokenException e) {
-            String errorMessage = "Invalid token: " + e.getMessage();
-            log.error(errorMessage);
+        } catch (InvalidTokenException | TokenExpiredException e) {
+            log.error(e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write(errorMessage);
-        } catch (TokenExpiredException e) {
-            String errorMessage = "Token expired: " + e.getMessage();
-            log.error(errorMessage);
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write(errorMessage);
+            response.getWriter().write(e.getMessage());
         }
 //        catch (Exception e) {
 //            String errorMessage = "Error while processing token: " + e.getMessage();
