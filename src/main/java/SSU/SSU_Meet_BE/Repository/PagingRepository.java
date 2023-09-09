@@ -11,4 +11,7 @@ import org.springframework.data.repository.query.Param;
 public interface PagingRepository extends PagingAndSortingRepository<StickyNote, Long> {
     @Query("SELECT s FROM StickyNote s JOIN FETCH s.member WHERE s.member.sex = :gender and s.isSold = 0 and s.member.major <> :major order by s.id DESC")
     Page<StickyNote> findByGender(@Param("gender") Gender gender, @Param("major") String major, Pageable pageable);
+
+    @Query("SELECT s FROM StickyNote s WHERE s.isSold = 0 order by s.id DESC")
+    Page<StickyNote> findByAllGender(Pageable pageable);
 }
