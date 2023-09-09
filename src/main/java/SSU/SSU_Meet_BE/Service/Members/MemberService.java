@@ -43,11 +43,6 @@ public class MemberService {
     private final TokenProvider tokenProvider;
     private final JsoupService jsoupService;
 
-//    @Transactional(readOnly = true)
-//    public String getMemberInfo(HttpServletRequest request) {
-//        String token = jwtAuthenticationFilter.parseBearerToken(request); // bearer 파싱
-//        return tokenProvider.validateTokenAndGetSubject(token);
-//    }
 
     public ApiResponse login(HttpServletRequest request, SignInDto signInDto) throws IOException {
         if (jsoupService.crawling(signInDto)) {      // 유세인트 조회 성공하면
@@ -153,7 +148,8 @@ public class MemberService {
             } else { // 사용자가 여성일 경우
                 allStickyNoteList = pagingRepository.findByGender(Gender.MALE, member.get().getMajor(), pageable); // 메인에 남성만 조회
             }
-
+            mainAllPageZeroDto.addBasicCounts(member.get().getNowStickyCount());
+            mainAllPageZeroDto.addAllStickyCount(allStickyNoteList.getTotalElements());
             for (StickyNote mainStickyNote : allStickyNoteList) {
                 Member stickyNoteMember = mainStickyNote.getMember();
                 MainInfoDto mainInfoDto = MainInfoDto.builder()
@@ -164,13 +160,7 @@ public class MemberService {
                         .stickyNote(mainStickyNote)
                         .mainInfoDto(mainInfoDto)
                         .build();
-                if (pageable.getPageNumber() == 0) { // 첫번 째 페이지면
-                    mainAllPageZeroDto.addBasicCounts(stickyNoteRepository.findMyStickyNoteCount(member.get().getId()));
-                    mainAllPageZeroDto.addAllStickyCount(allStickyNoteList.getTotalElements());
-                    mainAllPageZeroDto.addMainIdDto(mainIdDto);
-                } else { // 첫번 째 페이지 아니면
-                    mainAllDto.addMainIdDto(mainIdDto);
-                }
+                mainAllPageZeroDto.addMainIdDto(mainIdDto);
             }
             if (pageable.getPageNumber() == 0) { // 첫번 째 페이지면
                 return ApiResponse.success("SuccessFirstMainPageAccess", mainAllPageZeroDto);
@@ -178,7 +168,6 @@ public class MemberService {
                 return ApiResponse.success("SuccessMainPageUpToOne", mainAllDto);
             }
         }
-
         return ApiResponse.error("FailMainPage");
     }
 
