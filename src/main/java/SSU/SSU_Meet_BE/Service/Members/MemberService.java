@@ -77,12 +77,12 @@ public class MemberService {
 
             if (accessToken == null) {  // 클라이언트가 보낸 access token이 없으면
                 log.info("Access token is missing. Generating new tokens...");
-                return ApiResponse.success("NoToken", makeJWT(makeJwtDto)); // access , refresh token 생성
+                return ApiResponse.success(message, makeJWT(makeJwtDto)); // access , refresh token 생성
             } else { // 클라이언트가 보낸 access token이 있으면
                 log.info("Access token found. Verifying token...");
                 String subject = tokenProvider.validateTokenAndGetSubject(accessToken); // 액세스 토큰 유효성 검증
                 log.info("Access token is valid.");
-                return ApiResponse.success("OriginAccessToken", new SignInResponseNoRefresh(findUser.getStudentNumber(), "bearer", accessToken)); // 기존 액세스 토큰 그대로 전달
+                return ApiResponse.success(message, new SignInResponseNoRefresh(findUser.getStudentNumber(), "bearer", accessToken)); // 기존 액세스 토큰 그대로 전달
             }
         } catch (TokenExpiredException e) { // 액세스 토큰이 만료되었을 경우
             log.error("Access token expired: " + e.getMessage());
@@ -107,10 +107,11 @@ public class MemberService {
             return ApiResponse.error("RefreshTokenExpired"); // 클라이언트는 새로 로그인을 해야 함.
         }
     }
+
     // JWT 토큰 발급 (access + refresh)
     public SignInResponseWithRefresh makeJWT(MakeJwtDto makeJwtDto) {
-        String accessToken = tokenProvider.createToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));	// 액세스 토큰 생성
-        String refreshToken = tokenProvider.createRefreshToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));	// 리프레시 토큰 생성
+        String accessToken = tokenProvider.createToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));    // 액세스 토큰 생성
+        String refreshToken = tokenProvider.createRefreshToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));    // 리프레시 토큰 생성
         RefreshToken rt = RefreshToken.builder().memberId(makeJwtDto.getId()).refreshToken(refreshToken).build();
         if (refreshTokenRepository.existsByMemberId(rt.getMemberId())) { // 해당 멤버가 이미 refresh token을 가지고 있으면
             log.info("^&^&^&^&^&^& start");
@@ -120,17 +121,32 @@ public class MemberService {
         } else {  // 해당 멤버가 refresh token가 없으면
             refreshTokenRepository.save(rt); // refresh token create
         }
-        return new SignInResponseWithRefresh(makeJwtDto.getStudentNumber(),"bearer", accessToken, refreshToken);	// 생성자에 토큰 추가
+        return new SignInResponseWithRefresh(makeJwtDto.getStudentNumber(), "bearer", accessToken, refreshToken);    // 생성자에 토큰 추가
     }
 
     public ApiResponse newRegister(HttpServletRequest request, UserDetailsDto userDetailsDto) {
-        Optional<Member> member = getMemberFromToken(request);
-        if (member.isPresent()) {
-            member.get().newRegister(userDetailsDto);
-            member.get().changeFirstRegisterCheck(1);
-            return ApiResponse.success("SuccessToFirstRegistration");
-        } else {
-            return ApiResponse.error("CantFindUser");
+        try {
+            String accessToken = jwtAuthenticationFilter.parseBearerToken(request);
+            if (accessToken == null) {
+                return ApiResponse.error("NoAccessToken");
+            }
+            Optional<Member> member = getMemberFromToken(request);
+            if (member.isPresent()) {
+                member.get().newRegister(userDetailsDto);
+                member.get().changeFirstRegisterCheck(1);
+                return ApiResponse.success("SuccessToFirstRegistration");
+            } else {
+                return ApiResponse.error("CantFindUser");
+            }
+        } catch (TokenExpiredException e) { // 액세스 토큰이 만료되었을 경우
+            log.error("Access token expired: " + e.getMessage());
+            return ApiResponse.error("Access token expired");
+        } catch (InvalidTokenException e) { // 액세스 토큰이 유효하지 않을 경우
+            log.error("Invalid access token: " + e.getMessage());
+            return ApiResponse.error("Invalid access token");
+        } catch (Exception e) {
+            log.error("Error while processing token: " + e.getMessage());
+            return ApiResponse.error("ErrorUserInformation");
         }
     }
 
