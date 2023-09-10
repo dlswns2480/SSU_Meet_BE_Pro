@@ -77,12 +77,12 @@ public class MemberService {
 
             if (accessToken == null) {  // 클라이언트가 보낸 access token이 없으면
                 log.info("Access token is missing. Generating new tokens...");
-                return ApiResponse.success("NoToken", makeJWT(makeJwtDto)); // access , refresh token 생성
+                return ApiResponse.success(message, makeJWT(makeJwtDto)); // access , refresh token 생성
             } else { // 클라이언트가 보낸 access token이 있으면
                 log.info("Access token found. Verifying token...");
                 String subject = tokenProvider.validateTokenAndGetSubject(accessToken); // 액세스 토큰 유효성 검증
                 log.info("Access token is valid.");
-                return ApiResponse.success("OriginAccessToken", new SignInResponseNoRefresh(findUser.getStudentNumber(), "bearer", accessToken)); // 기존 액세스 토큰 그대로 전달
+                return ApiResponse.success(message, new SignInResponseNoRefresh(findUser.getStudentNumber(), "bearer", accessToken)); // 기존 액세스 토큰 그대로 전달
             }
         } catch (TokenExpiredException e) { // 액세스 토큰이 만료되었을 경우
             log.error("Access token expired: " + e.getMessage());
@@ -124,14 +124,31 @@ public class MemberService {
     }
 
     public ApiResponse newRegister(HttpServletRequest request, UserDetailsDto userDetailsDto) {
-        Optional<Member> member = getMemberFromToken(request);
-        if (member.isPresent()) {
-            member.get().newRegister(userDetailsDto);
-            member.get().changeFirstRegisterCheck(1);
-            return ApiResponse.success("SuccessToFirstRegistration");
-        } else {
-            return ApiResponse.error("CantFindUser");
+        try {
+            String accessToken = jwtAuthenticationFilter.parseBearerToken(request);
+
+            if (accessToken == null) {
+                return ApiResponse.error("NoAccessToken"); // 액세스 토큰 없으니 프론트에선 로그인 api로 보내
+            }
+            Optional<Member> member = getMemberFromToken(request);
+            if (member.isPresent()) {
+                member.get().newRegister(userDetailsDto);
+                member.get().changeFirstRegisterCheck(1);
+                return ApiResponse.success("SuccessToFirstRegistration");
+            } else {
+                return ApiResponse.error("CantFindUser");
+            }
+        } catch (TokenExpiredException e) { // 액세스 토큰이 만료되었을 경우
+            log.error("Access token expired: " + e.getMessage());
+            return ApiResponse.error("Access token expired");
+        } catch (InvalidTokenException e) { // 액세스 토큰이 유효하지 않을 경우
+            log.error("Invalid access token: " + e.getMessage());
+            return ApiResponse.error("Invalid access token");
+        } catch (Exception e) {
+            log.error("Error while processing token: " + e.getMessage());
+            return ApiResponse.error("Token processing error");
         }
+
     }
 
     public ApiResponse myCoinCount(HttpServletRequest request) {
