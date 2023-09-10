@@ -152,8 +152,25 @@ public class MemberService {
     }
 
     public ApiResponse myCoinCount(HttpServletRequest request) {
-        Optional<Member> member = getMemberFromToken(request);
-        return member.map(value -> ApiResponse.success("SuccessCoinCount", MyCoinDto.builder().myCoinCount(value.getCoin()).build())).orElseGet(() -> ApiResponse.error("ErrorCoinCount"));
+        try {
+            String accessToken = jwtAuthenticationFilter.parseBearerToken(request);
+
+            if (accessToken == null) {
+                return ApiResponse.error("NoAccessToken"); // 액세스 토큰 없으니 프론트에선 로그인 api로 보내
+            }
+            Optional<Member> member = getMemberFromToken(request);
+            return member.map(value -> ApiResponse.success("SuccessCoinCount", MyCoinDto.builder().myCoinCount(value.getCoin()).build())).orElseGet(() -> ApiResponse.error("ErrorCoinCount"));
+        } catch (TokenExpiredException e) { // 액세스 토큰이 만료되었을 경우
+            log.error("Access token expired: " + e.getMessage());
+            return ApiResponse.error("Access token expired");
+        } catch (InvalidTokenException e) { // 액세스 토큰이 유효하지 않을 경우
+            log.error("Invalid access token: " + e.getMessage());
+            return ApiResponse.error("Invalid access token");
+        } catch (Exception e) {
+            log.error("Error while processing token: " + e.getMessage());
+            return ApiResponse.error("Token processing error");
+        }
+
     }
 
     //메인 페이지

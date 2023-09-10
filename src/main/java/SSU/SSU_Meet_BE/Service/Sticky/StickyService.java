@@ -42,6 +42,9 @@ public class StickyService {
                 if (member.get().getNowStickyCount() > 2) { // 포스트잇 등록 개수 조건 체크
                     return ApiResponse.error("ExceedingPostItRegistrations");
                 }
+                if (member.get().getFirstRegisterCheck() == 0) {
+                    return ApiResponse.error("NeedBasicInfo");
+                }
 
                 StickyNote stickyNote = StickyNote.builder().stickyRegisterDto(stickyRegisterDto).build();
                 member.get().addSticky(stickyNote); // 연관관계 메서드
