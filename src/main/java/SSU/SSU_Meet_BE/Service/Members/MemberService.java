@@ -198,6 +198,9 @@ public class MemberService {
                     MainAllDto mainAllDto = new MainAllDto();
                     MainAllPageZeroDto mainAllPageZeroDto = new MainAllPageZeroDto();
                     Gender gender = member.get().getSex();
+                    if (member.get().getFirstRegisterCheck() == 0){
+                        return ApiResponse.error("NeedBasicInfo");
+                    }
                     if (gender == Gender.MALE) { // 사용자가 남성일 경우
                         allStickyNoteList = pagingRepository.findByGender(Gender.FEMALE, member.get().getMajor(), pageable); // 메인에 여성만 조회
                     } else {                    // 사용자가 여성일 경우
