@@ -12,7 +12,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry){
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:1234")
+                .allowedOrigins("https://ssumeet-sm.firebaseapp.com/")
                 .allowedMethods("GET", "POST", "PUT", "DELETE")
                 .allowCredentials(true)
                 .maxAge(3600);

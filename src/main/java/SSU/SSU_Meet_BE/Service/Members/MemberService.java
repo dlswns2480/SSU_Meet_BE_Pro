@@ -127,8 +127,11 @@ public class MemberService {
     public ApiResponse newRegister(HttpServletRequest request, UserDetailsDto userDetailsDto) {
         try {
             String accessToken = jwtAuthenticationFilter.parseBearerToken(request);
+
+
             if (accessToken == null) {
-                return ApiResponse.error("NoAccessToken");
+                return ApiResponse.error("NoAccessToken"); // 액세스 토큰 없으니 프론트에선 로그인 api로 보내
+
             }
             Optional<Member> member = getMemberFromToken(request);
             if (member.isPresent()) {
@@ -146,8 +149,10 @@ public class MemberService {
             return ApiResponse.error("Invalid access token");
         } catch (Exception e) {
             log.error("Error while processing token: " + e.getMessage());
-            return ApiResponse.error("ErrorUserInformation");
+
+            return ApiResponse.error("Token processing error");
         }
+
     }
 
     public ApiResponse myCoinCount(HttpServletRequest request) {
@@ -197,6 +202,9 @@ public class MemberService {
                     MainAllDto mainAllDto = new MainAllDto();
                     MainAllPageZeroDto mainAllPageZeroDto = new MainAllPageZeroDto();
                     Gender gender = member.get().getSex();
+                    if (member.get().getFirstRegisterCheck() == 0){
+                        return ApiResponse.error("NeedBasicInfo");
+                    }
                     if (gender == Gender.MALE) { // 사용자가 남성일 경우
                         allStickyNoteList = pagingRepository.findByGender(Gender.FEMALE, member.get().getMajor(), pageable); // 메인에 여성만 조회
                     } else {                    // 사용자가 여성일 경우

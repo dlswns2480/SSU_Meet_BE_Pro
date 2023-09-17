@@ -41,8 +41,8 @@ dependencies {
 	// jsoup
 	implementation 'org.jsoup:jsoup:1.15.3'
 //	// maria db
-//	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.1.4'
-	runtimeOnly 'mysql:mysql-connector-java'
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.1.4'
+//	runtimeOnly 'mysql:mysql-connector-java'
 }
 
 tasks.named('test') {
