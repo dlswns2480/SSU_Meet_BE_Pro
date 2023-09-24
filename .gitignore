@@ -5,9 +5,8 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-build.gradle
 application.yaml
-
+jwt.yaml
 ### STS ###
 .apt_generated
 .classpath
