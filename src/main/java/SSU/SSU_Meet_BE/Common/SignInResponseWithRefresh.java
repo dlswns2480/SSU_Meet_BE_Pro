@@ -7,8 +7,8 @@ public record SignInResponseWithRefresh(
         String studentNumber,
         @Schema(description = "토큰 타입", example = "bearer")
         String tokenType,
-        @Schema(description = "access 토큰", example = "aacccceessss")
-        String accessToken,	// 추가
-        @Schema(description = "refresh 토큰", example = "rreeffrreesshh")
-        String refreshToken	// 추가
+        @Schema(description = "Access 토큰", example = "access.access.access")
+        String accessToken,
+        @Schema(description = "Refresh 토큰", example = "refresh.refresh.refresh")
+        String refreshToken
 ){}

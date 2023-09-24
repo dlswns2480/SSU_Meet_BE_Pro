@@ -7,6 +7,6 @@ public record SignInResponseNoRefresh (
     String studentNumber,
     @Schema(description = "토큰 타입", example = "bearer")
     String tokenType,
-    @Schema(description = "access 토큰", example = "aacccceessss")
-    String accessToken // 추가
+    @Schema(description = "Access 토큰", example = "access.access.access")
+    String accessToken
 ){}

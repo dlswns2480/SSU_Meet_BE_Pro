@@ -107,10 +107,11 @@ public class MemberService {
             return ApiResponse.error("RefreshTokenExpired"); // 클라이언트는 새로 로그인을 해야 함.
         }
     }
+
     // JWT 토큰 발급 (access + refresh)
     public SignInResponseWithRefresh makeJWT(MakeJwtDto makeJwtDto) {
-        String accessToken = tokenProvider.createToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));	// 액세스 토큰 생성
-        String refreshToken = tokenProvider.createRefreshToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));	// 리프레시 토큰 생성
+        String accessToken = tokenProvider.createToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));    // 액세스 토큰 생성
+        String refreshToken = tokenProvider.createRefreshToken(String.format("%s:%s", makeJwtDto.getId(), makeJwtDto.getType()));    // 리프레시 토큰 생성
         RefreshToken rt = RefreshToken.builder().memberId(makeJwtDto.getId()).refreshToken(refreshToken).build();
         if (refreshTokenRepository.existsByMemberId(rt.getMemberId())) { // 해당 멤버가 이미 refresh token을 가지고 있으면
             log.info("^&^&^&^&^&^& start");
@@ -120,15 +121,17 @@ public class MemberService {
         } else {  // 해당 멤버가 refresh token가 없으면
             refreshTokenRepository.save(rt); // refresh token create
         }
-        return new SignInResponseWithRefresh(makeJwtDto.getStudentNumber(),"bearer", accessToken, refreshToken);	// 생성자에 토큰 추가
+        return new SignInResponseWithRefresh(makeJwtDto.getStudentNumber(), "bearer", accessToken, refreshToken);    // 생성자에 토큰 추가
     }
 
     public ApiResponse newRegister(HttpServletRequest request, UserDetailsDto userDetailsDto) {
         try {
             String accessToken = jwtAuthenticationFilter.parseBearerToken(request);
 
+
             if (accessToken == null) {
                 return ApiResponse.error("NoAccessToken"); // 액세스 토큰 없으니 프론트에선 로그인 api로 보내
+
             }
             Optional<Member> member = getMemberFromToken(request);
             if (member.isPresent()) {
@@ -146,6 +149,7 @@ public class MemberService {
             return ApiResponse.error("Invalid access token");
         } catch (Exception e) {
             log.error("Error while processing token: " + e.getMessage());
+
             return ApiResponse.error("Token processing error");
         }
 
@@ -215,6 +219,9 @@ public class MemberService {
                     MainAllDto mainAllDto = new MainAllDto();
                     MainAllPageZeroDto mainAllPageZeroDto = new MainAllPageZeroDto();
                     Gender gender = member.get().getSex();
+                    if (member.get().getFirstRegisterCheck() == 0){
+                        return ApiResponse.error("NeedBasicInfo");
+                    }
                     if (gender == Gender.MALE) { // 사용자가 남성일 경우
                         allStickyNoteList = pagingRepository.findByGender(Gender.FEMALE, member.get().getMajor(), pageable); // 메인에 여성만 조회
                     } else {                    // 사용자가 여성일 경우

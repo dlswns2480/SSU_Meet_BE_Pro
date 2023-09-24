@@ -7,9 +7,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 
 @SpringBootApplication
 public class SsuMeetBeApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(SsuMeetBeApplication.class, args);
 	}
-
 }

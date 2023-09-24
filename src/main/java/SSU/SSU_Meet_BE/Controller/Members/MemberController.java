@@ -24,11 +24,7 @@ public class MemberController {
     private final JsoupService jsoupService;
     private final MemberRepository memberRepository;
 
-    //    @Operation(summary = "회원 정보 조회")
-//    @PostMapping("/getdetail")
-//    public ApiResponse getMemberInfo(HttpServletRequest request) {
-//        return ApiResponse.success("정보 얻기 성공", memberService.getMemberInfo(request));
-//    }
+
     @Operation(summary = "로그인 & JWT 토큰 발급")
     @PostMapping("/login")
     public ApiResponse login(HttpServletRequest request, @RequestBody SignInDto signInDto) throws IOException {
@@ -102,5 +98,3 @@ public class MemberController {
     }
 
 }
-
-
