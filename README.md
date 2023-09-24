@@ -3,8 +3,8 @@
 - Project : Gradle - Groovy
 - Spring Boot : 3.1.1
 - Java : 17
-- H2 Database : 2.1.214
-- Maria Database : 10.6.14
+- H2 Database (Local) : 2.1.214
+- Maria Database (AWS RDS) : 10.6.14
 - Server : AWS EC2
 
 **API 명세서** <br>
